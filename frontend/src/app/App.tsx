@@ -1,15 +1,17 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
-import { fmtAgo, fmtPrice } from "./lib/format";
-import { isLocalSimulation } from "./lib/manifest";
-import { isFresh } from "./lib/sim";
-import { useNow, useSim } from "./lib/store";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { BrowserRouter, Link, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { ConnectButton, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useSwitchChain } from "wagmi";
+import { fmtAgo, fmtPrice, shortHex } from "./lib/format";
+import { isLocalSimulation } from "./lib/manifest";
+import { E6, parseUnits } from "./lib/math";
+import { STATUS_LABEL, isFresh } from "./lib/sim";
+import { actions, useNow, useSim } from "./lib/store";
 import { BASE_SEPOLIA, rainbowTheme, wagmiConfig } from "./lib/wagmi";
-import { Pill, ToastProvider } from "./components/ui";
+import { Pill, ToastProvider, useNotify } from "./components/ui";
+import { Backdrop } from "./components/visuals";
 import { Overview } from "./pages/Overview";
 import { PositionPage } from "./pages/Position";
 import { Protection } from "./pages/Protection";
@@ -25,6 +27,9 @@ const I = {
   simulator: "M3 17l6-6 4 4 8-8M15 7h6v6",
   activity: "M3 12h4l3 8 4-16 3 8h4",
   execution: "M5 4h14v4H5zM5 10h14v4H5zM5 16h14v4H5z",
+  search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-3.5-3.5",
+  menu: "M4 7h16M4 12h16M4 17h16",
+  up: "M12 19V5M6 11l6-6 6 6",
 };
 const Icon = ({ d }: { d: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -40,39 +45,268 @@ const NAV: { to: string; label: string; icon: string; end?: boolean }[] = [
   { to: "/activity", label: "Activity", icon: I.activity },
   { to: "/execution", label: "Execution Details", icon: I.execution },
 ];
+const navIndex = (path: string) => {
+  const i = NAV.findIndex((n) => (n.end ? path === n.to : path.startsWith(n.to)));
+  return i === -1 ? 0 : i;
+};
 
-/* RainbowKit's modals, drawn with the dashboard's own buttons. */
-function WalletButton() {
+/* A stable two-tone avatar from the wallet address. */
+function addrAvatar(address: string) {
+  const h1 = parseInt(address.slice(2, 6), 16) % 360;
+  const h2 = (h1 + 40) % 360;
+  return { background: `linear-gradient(140deg, hsl(${h1} 28% 46%), hsl(${h2} 24% 26%))` };
+}
+
+/* ───────── Top bar: wallet avatar, RainbowKit behind it ───────── */
+function WalletAvatar() {
   const { switchChain, isPending } = useSwitchChain();
   return (
     <ConnectButton.Custom>
-      {({ account, chain, mounted, openConnectModal, openAccountModal, openChainModal, connectModalOpen }) => {
-        if (!mounted) return <span className="wallet-slot" aria-hidden="true" />;
+      {({ account, chain, mounted, openConnectModal, openAccountModal, openChainModal }) => {
+        if (!mounted) return <span className="avatar avatar--empty" aria-hidden="true" />;
         if (!account || !chain)
           return (
-            <button className="btn btn--primary btn--sm" onClick={openConnectModal} disabled={connectModalOpen}>
-              Connect wallet
+            <button className="btn btn--ghost btn--sm" onClick={openConnectModal}>
+              <span className="lbl-long">Connect wallet</span>
+              <span className="lbl-short">Connect</span>
             </button>
           );
         if (chain.unsupported)
           return (
-            <button
-              className="btn btn--warn btn--sm"
-              disabled={isPending}
-              onClick={() => switchChain({ chainId: BASE_SEPOLIA.id }, { onError: () => openChainModal() })}
-            >
-              {isPending ? "Switching…" : "Switch to Base Sepolia"}
+            <button className="btn btn--warn btn--sm" disabled={isPending} onClick={() => switchChain({ chainId: BASE_SEPOLIA.id }, { onError: () => openChainModal() })}>
+              {isPending ? "Switching…" : (
+                <>
+                  <span className="lbl-long">Switch to Base Sepolia</span>
+                  <span className="lbl-short">Switch network</span>
+                </>
+              )}
             </button>
           );
         return (
-          <button className="wallet mono" onClick={openAccountModal} title={`${account.address} on ${chain.name}`}>
-            <i />
-            {account.displayName}
-            {account.displayBalance && <span className="wallet__bal">{account.displayBalance}</span>}
+          <button className="avatar" style={addrAvatar(account.address)} onClick={openAccountModal} title={`${account.address} · ${chain.name}`} aria-label={`Wallet ${account.displayName}`}>
+            {account.address.slice(2, 4).toUpperCase()}
           </button>
         );
       }}
     </ConnectButton.Custom>
+  );
+}
+
+/* ───────── Sidebar profile: the connected wallet ───────── */
+function Profile() {
+  return (
+    <ConnectButton.Custom>
+      {({ account, chain, mounted, openConnectModal, openAccountModal }) => {
+        const connected = mounted && account && chain;
+        return (
+          <button className="profile" onClick={connected ? openAccountModal : openConnectModal} title={connected ? account.address : "Connect a wallet"}>
+            {connected ? (
+              <span className="avatar" style={addrAvatar(account.address)} aria-hidden="true">
+                {account.address.slice(2, 4).toUpperCase()}
+              </span>
+            ) : (
+              <span className="avatar avatar--empty" aria-hidden="true">
+                ?
+              </span>
+            )}
+            <span className="profile__text">
+              <b>{connected ? shortHex(account.address, 4, 4) : "Read-only"}</b>
+              <span>{connected ? (chain.unsupported ? "Wrong network" : chain.name) : "Connect wallet"}</span>
+            </span>
+          </button>
+        );
+      }}
+    </ConnectButton.Custom>
+  );
+}
+
+/* ───────── Top bar: global search over pages, oracle versions and tx hashes ───────── */
+type Hit = { kind: string; label: string; sub: string; to: string; external?: boolean };
+function GlobalSearch() {
+  const s = useSim();
+  const navigate = useNavigate();
+  const input = useRef<HTMLInputElement>(null);
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+
+  const term = q.trim().toLowerCase();
+  const hits: Hit[] = [];
+  if (term) {
+    const pages: Hit[] = [
+      { kind: "Page", label: "Home", sub: "Repay Relay homepage", to: "/", external: true },
+      ...NAV.map((n) => ({ kind: "Page", label: n.label, sub: "Dashboard", to: n.to })),
+    ];
+    hits.push(...pages.filter((p) => p.label.toLowerCase().includes(term)));
+    for (const r of [...s.runs].reverse()) {
+      const label = `v${r.version} · ${fmtPrice(r.priceE6)}`;
+      const txs: [string, string | undefined][] = [
+        ["Price update", r.origin.tx],
+        ["Reactive request", r.request?.tx],
+        ["Callback", r.callback?.tx],
+      ];
+      const tx = term.startsWith("0x") && term.length >= 4 ? txs.find(([, h]) => h?.toLowerCase().includes(term)) : undefined;
+      if (tx) hits.push({ kind: "Tx", label: shortHex(tx[1]!, 8, 6), sub: `${tx[0]} of oracle v${r.version}`, to: `/execution/${r.version}` });
+      else if (`v${r.version} ${label} ${STATUS_LABEL[r.status]}`.toLowerCase().includes(term))
+        hits.push({ kind: "Run", label, sub: STATUS_LABEL[r.status], to: `/execution/${r.version}` });
+    }
+  }
+  const list = hits.slice(0, 8);
+
+  const pick = (h?: Hit) => {
+    if (!h) return;
+    setQ("");
+    setOpen(false);
+    input.current?.blur();
+    if (h.external) window.location.href = h.to;
+    else navigate(h.to);
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = document.activeElement?.tagName ?? "";
+      if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(t)) {
+        e.preventDefault();
+        input.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div className="search" role="search">
+      <Icon d={I.search} />
+      <label htmlFor="global-search" className="sr">
+        Search pages, oracle versions and transaction hashes
+      </label>
+      <input
+        ref={input}
+        id="global-search"
+        type="search"
+        placeholder="Search pages, versions, tx hashes"
+        autoComplete="off"
+        spellCheck={false}
+        value={q}
+        role="combobox"
+        aria-expanded={open && !!term}
+        aria-controls="search-results"
+        aria-activedescendant={open && list.length ? `hit-${hi}` : undefined}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setOpen(true);
+          setHi(0);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setQ("");
+            setOpen(false);
+          } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            if (list.length) setHi((hi + (e.key === "ArrowDown" ? 1 : list.length - 1)) % list.length);
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            pick(list[hi]);
+          }
+        }}
+      />
+      <span className="kbd" aria-hidden="true">
+        /
+      </span>
+      {open && term && (
+        <ul className="results" id="search-results" role="listbox" aria-label="Search results">
+          {list.length ? (
+            list.map((h, i) => (
+              <li
+                key={h.kind + h.label + h.to}
+                id={`hit-${i}`}
+                role="option"
+                aria-selected={i === hi}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pick(h);
+                }}
+                onMouseEnter={() => setHi(i)}
+              >
+                <b className={h.kind === "Tx" ? "mono" : ""}>{h.label}</b>
+                <span>{h.sub}</span>
+                <em>{h.kind}</em>
+              </li>
+            ))
+          ) : (
+            <li className="results__empty" role="option" aria-selected={false}>
+              Nothing matches “{q.trim()}”. Try a page name, v3 or a tx hash.
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ───────── Top bar primary action: push an oracle price ───────── */
+function PushPrice() {
+  const notify = useNotify();
+  const s = useSim();
+  const [open, setOpen] = useState(false);
+  const [price, setPrice] = useState("1,350");
+  const box = useRef<HTMLDivElement>(null);
+  const priceE6 = parseUnits(price, 6);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  const push = () => {
+    if (!priceE6) return;
+    notify(actions.pushPrice(priceE6));
+    setOpen(false);
+  };
+  return (
+    <div className="push" ref={box}>
+      <button className="btn btn--primary btn--sm" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)}>
+        <Icon d={I.up} />
+        <span className="push__lbl">Push price</span>
+      </button>
+      {open && (
+        <div className="push__panel" role="dialog" aria-label="Push an oracle price">
+          <p className="push__title">Operator · new oracle price</p>
+          <p className="push__note">
+            Now {fmtPrice(s.oracle.priceE6)} at v{s.oracle.version}. Trigger {fmtPrice(s.routeTriggerE6)}.
+          </p>
+          <label className="field__box" htmlFor="push-price">
+            <span className="dim">$</span>
+            <input
+              id="push-price"
+              autoFocus
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && push()}
+              aria-invalid={!priceE6}
+            />
+          </label>
+          <div className="presets">
+            {[1800, 1400, 1350, 1200].map((p) => (
+              <button key={p} className={`preset ${priceE6 === BigInt(p) * E6 ? "is-on" : ""}`} onClick={() => setPrice(p.toLocaleString("en-US"))}>
+                ${p.toLocaleString("en-US")}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn--primary btn--sm btn--block" disabled={!priceE6} onClick={push}>
+            Push {priceE6 ? fmtPrice(priceE6) : "price"}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -83,7 +317,7 @@ function OracleChip() {
   return (
     <Link to="/simulator" className="oracle-chip" title={`Oracle v${s.oracle.version}, updated ${fmtAgo(s.oracle.updatedAt, now)}`}>
       <span className="mono">{fmtPrice(s.oracle.priceE6)}</span>
-      <Pill tone={fresh ? "ok" : "warn"}>{fresh ? `v${s.oracle.version} · fresh` : `v${s.oracle.version} · stale`}</Pill>
+      <Pill tone={fresh ? "ok" : "warn"}>{fresh ? `v${s.oracle.version}` : `v${s.oracle.version} stale`}</Pill>
     </Link>
   );
 }
@@ -91,6 +325,19 @@ function OracleChip() {
 function Shell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const nav = useRef<HTMLUListElement>(null);
+  const [pill, setPill] = useState<{ y: number; h: number } | null>(null);
+  const active = navIndex(loc.pathname);
+
+  const measure = () => {
+    const a = nav.current?.querySelectorAll<HTMLAnchorElement>(".side__link")[active];
+    if (a) setPill({ y: a.offsetTop, h: a.offsetHeight });
+  };
+  useLayoutEffect(measure, [active]);
+  useEffect(() => {
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  });
   useEffect(() => {
     setOpen(false);
     window.scrollTo(0, 0);
@@ -103,60 +350,67 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className={`shell ${open ? "is-open" : ""}`}>
+      <Backdrop />
       <a className="skip" href="#main">
         Skip to content
       </a>
       <aside className="side" aria-label="Dashboard">
         <a className="brand" href="/">
-          <img src="/home/assets/img/relay-mark.svg" alt="" width="28" height="28" />
-          <span>repay relay</span>
+          <svg className="brand__mark" viewBox="0 0 26 26" aria-hidden="true">
+            <path d="M21 13a8 8 0 1 1-2.6-5.9" fill="none" stroke="#ece6d6" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M15.6 4.6h4.2v4.2" fill="none" stroke="#ece6d6" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="13" cy="13" r="3.2" fill="#c95d2a" />
+          </svg>
+          <span className="brand__text">
+            <b>repay relay</b>
+            <small>dashboard</small>
+          </span>
         </a>
-        <nav className="side__nav">
-          <a className="side__link" href="/">
+        <nav aria-label="Pages">
+          <a className="side__home" href="/">
             <Icon d={I.home} />
-            Home
+            <span>Home</span>
           </a>
-          <span className="side__sep">Dashboard</span>
-          {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `side__link ${isActive ? "is-active" : ""}`}>
-              <Icon d={n.icon} />
-              {n.label}
-            </NavLink>
-          ))}
+          <p className="side__label">Dashboard</p>
+          <ul className="side__nav" ref={nav}>
+            {pill && <li className="side__pill" aria-hidden="true" style={{ transform: `translateY(${pill.y}px)`, height: pill.h }} />}
+            {NAV.map((n) => (
+              <li key={n.to}>
+                <NavLink to={n.to} end={n.end} title={n.label} className={({ isActive }) => `side__link ${isActive ? "is-active" : ""}`}>
+                  <Icon d={n.icon} />
+                  <span>{n.label}</span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
         </nav>
-        <div className="side__foot">
-          {isLocalSimulation ? (
-            <p>
-              <b>Local simulation.</b> Contracts are not deployed yet. Every number follows the vault's integer math, but nothing is sent on chain.
-            </p>
-          ) : (
-            <p>Reading Base Sepolia and Reactive Lasna from the deploy manifest.</p>
-          )}
-          <span className="mono dim">Base Sepolia 84532 · Lasna 5318007</span>
-        </div>
+        {isLocalSimulation && (
+          <p className="side__note">
+            <b>Local simulation.</b> Contracts are not deployed yet. Same math as the vault, nothing sent on chain.
+          </p>
+        )}
+        <Profile />
       </aside>
       <button className="scrim" aria-label="Close menu" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)} />
 
-      <div className="main">
-        <header className="top">
-          <button className="top__menu" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>
-            <span />
-            <span />
-          </button>
-          <a className="brand brand--sm top__brand" href="/">
-            <img src="/home/assets/img/relay-mark.svg" alt="" width="22" height="22" />
-            <span>repay relay</span>
-          </a>
-          <div className="top__right">
-            {isLocalSimulation && <span className="simtag simtag--top">Local simulation</span>}
-            <OracleChip />
-            <WalletButton />
-          </div>
-        </header>
-        <main id="main" className="content">
+      <header className="top">
+        <button className="top__menu" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>
+          <Icon d={I.menu} />
+        </button>
+        <GlobalSearch />
+        <div className="top__right">
+          {isLocalSimulation && <span className="simtag simtag--top">Local simulation</span>}
+          <OracleChip />
+          <PushPrice />
+          <WalletAvatar />
+        </div>
+      </header>
+
+      <main id="main" className="content">
+        <div className="page" key={loc.pathname}>
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

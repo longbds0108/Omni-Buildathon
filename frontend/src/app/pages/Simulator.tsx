@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { fmtMusd, fmtPct, fmtPrice, fmtUsd } from "../lib/format";
 import { E6, LIQ_BPS, OPEN_MIN_BPS, TARGET_BPS, parseUnits, ratioBps, collateralValueE6, repayPlan } from "../lib/math";
 import { DEMO_POSITION, actions, useSim } from "../lib/store";
+import { useTweenArray } from "../components/visuals";
 import { Card, Field, PageHead, Pill, RatioMeter, Row, RunLink, SimTag, StatusChip, ratioTone, useNotify } from "../components/ui";
 
 const MIN = 500;
@@ -124,34 +125,34 @@ export function Simulator() {
   );
 }
 
-/* Ratio across prices: without protection, and after one automatic repay at or under the trigger. */
+/* Ratio across prices: without protection, and after one automatic repay at or under the trigger. Lines and markers
+   animate when the position or the chosen price changes. */
 function RatioChart({ base, trigger, priceE6 }: { base: typeof DEMO_POSITION; trigger: bigint; priceE6: bigint | null }) {
   const W = 640;
   const H = 260;
-  const pad = { l: 44, r: 14, t: 14, b: 30 };
+  const pad = { l: 44, r: 16, t: 14, b: 30 };
   const yMax = 250;
   const x = (p: number) => pad.l + ((p - MIN) / (MAX - MIN)) * (W - pad.l - pad.r);
   const y = (pct: number) => pad.t + (1 - Math.min(pct, yMax) / yMax) * (H - pad.t - pad.b);
-  const toPct = (bps: bigint | null) => (bps === null ? yMax : Number(bps) / 100);
+  const toPct = (bps: bigint | null) => (bps === null ? yMax : Math.min(yMax, Number(bps) / 100));
 
-  const { raw, after } = useMemo(() => {
-    const raw: string[] = [];
-    const after: string[] = [];
-    for (let p = MIN; p <= MAX; p += 25) {
-      const pe6 = BigInt(p) * E6;
-      const r = ratioBps(collateralValueE6(base.collateralE18, pe6), base.debtE6);
-      raw.push(`${x(p).toFixed(1)},${y(toPct(r)).toFixed(1)}`);
-      const plan = repayPlan({ ...base, priceE6: pe6 });
-      after.push(`${x(p).toFixed(1)},${y(toPct(pe6 <= trigger ? plan.ratioAfterBps : r)).toFixed(1)}`);
-    }
-    return { raw: raw.join(" "), after: after.join(" ") };
-  }, [base.collateralE18, base.debtE6, base.reserveE6, base.maxRepayE6, trigger]);
+  const prices: number[] = [];
+  for (let p = MIN; p <= MAX; p += 25) prices.push(p);
+  const rawT = prices.map((p) => toPct(ratioBps(collateralValueE6(base.collateralE18, BigInt(p) * E6), base.debtE6)));
+  const afterT = prices.map((p, i) => (BigInt(p) * E6 <= trigger ? toPct(repayPlan({ ...base, priceE6: BigInt(p) * E6 }).ratioAfterBps) : rawT[i]));
+  const sel = priceE6 ? Math.min(MAX, Math.max(MIN, Number(priceE6 / E6))) : MIN;
+  const selRaw = priceE6 ? toPct(ratioBps(collateralValueE6(base.collateralE18, priceE6), base.debtE6)) : 0;
+  const selAfter = priceE6 && priceE6 <= trigger ? toPct(repayPlan({ ...base, priceE6 }).ratioAfterBps) : selRaw;
+  const tw = useTweenArray([...rawT, ...afterT, sel, selRaw, selAfter], 260);
+  const n = prices.length;
+  const raw = prices.map((p, i) => `${x(p).toFixed(1)},${y(tw[i]).toFixed(1)}`).join(" ");
+  const after = prices.map((p, i) => `${x(p).toFixed(1)},${y(tw[n + i]).toFixed(1)}`).join(" ");
+  const [tSel, tRaw, tAfter] = tw.slice(2 * n);
 
   const tx = x(Number(trigger / E6));
-  const sel = priceE6 ? Math.min(MAX, Math.max(MIN, Number(priceE6 / E6))) : null;
   const guides: [bigint, string, string][] = [
-    [LIQ_BPS, "120% Simulated liquidation line", "var(--danger)"],
-    [TARGET_BPS, "150% target", "var(--success)"],
+    [LIQ_BPS, "120% Simulated liquidation line", "var(--bad)"],
+    [TARGET_BPS, "150% target", "var(--good)"],
     [OPEN_MIN_BPS, "160% open minimum", "var(--muted)"],
   ];
 
@@ -167,6 +168,7 @@ function RatioChart({ base, trigger, priceE6 }: { base: typeof DEMO_POSITION; tr
         {[500, 1000, 1500, 2000, 2500].map((p) => (
           <text key={p} x={x(p)} y={H - 8} textAnchor={p === MAX ? "end" : "middle"} className="chart__tick">${p.toLocaleString("en-US")}</text>
         ))}
+        <rect x={pad.l} y={pad.t} width={Math.max(0, tx - pad.l)} height={H - pad.t - pad.b} className="chart__zone" />
         {guides.map(([bps, label, color]) => (
           <g key={label}>
             <line x1={pad.l} x2={W - pad.r} y1={y(Number(bps) / 100)} y2={y(Number(bps) / 100)} stroke={color} strokeDasharray="4 5" strokeWidth="1" opacity=".7" />
@@ -181,16 +183,15 @@ function RatioChart({ base, trigger, priceE6 }: { base: typeof DEMO_POSITION; tr
             </text>
           </g>
         ))}
-        <rect x={pad.l} y={pad.t} width={tx - pad.l} height={H - pad.t - pad.b} className="chart__zone" />
         <line x1={tx} x2={tx} y1={pad.t} y2={H - pad.b} className="chart__trigger" />
-        <text x={tx + 6} y={pad.t + 12} className="chart__label" fill="var(--brand-soft)">trigger ${Number(trigger / E6).toLocaleString("en-US")}</text>
+        <text x={tx + 6} y={pad.t + 12} className="chart__label" fill="var(--muted)">trigger ${Number(trigger / E6).toLocaleString("en-US")}</text>
         <polyline points={raw} className="chart__raw" />
         <polyline points={after} className="chart__after" />
-        {sel !== null && priceE6 !== null && (
+        {priceE6 !== null && (
           <g>
-            <line x1={x(sel)} x2={x(sel)} y1={pad.t} y2={H - pad.b} className="chart__sel" />
-            <circle cx={x(sel)} cy={y(toPct(ratioBps(collateralValueE6(base.collateralE18, priceE6), base.debtE6)))} r="4.5" className="chart__dot chart__dot--raw" />
-            {priceE6 <= trigger && <circle cx={x(sel)} cy={y(toPct(repayPlan({ ...base, priceE6 }).ratioAfterBps))} r="4.5" className="chart__dot" />}
+            <line x1={x(tSel)} x2={x(tSel)} y1={pad.t} y2={H - pad.b} className="chart__sel" />
+            <circle cx={x(tSel)} cy={y(tRaw)} r="4.5" className="chart__dot chart__dot--raw" />
+            {priceE6 <= trigger && <circle cx={x(tSel)} cy={y(tAfter)} r="4.5" className="chart__dot" />}
           </g>
         )}
       </svg>

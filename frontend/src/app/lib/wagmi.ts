@@ -29,28 +29,28 @@ export const wagmiConfig = createConfig({
 
 export const BASE_SEPOLIA = baseSepolia;
 
-/* The homepage palette: cream accent on ink, Inter Tight, large radii. */
-const base = darkTheme({ accentColor: "#e8e3d5", accentColorForeground: "#111015", borderRadius: "large", overlayBlur: "small" });
+/* The dashboard palette: charcoal and olive surfaces, warm off-white text, burnt orange for the primary action. */
+const base = darkTheme({ accentColor: "#c95d2a", accentColorForeground: "#fff6ec", borderRadius: "small", overlayBlur: "small" });
 export const rainbowTheme: Theme = {
   ...base,
-  fonts: { body: '"Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif' },
+  fonts: { body: '"Geist", "Inter", ui-sans-serif, system-ui, sans-serif' },
   colors: {
     ...base.colors,
-    modalBackground: "#141218",
-    modalBorder: "rgba(255, 255, 255, 0.08)",
-    modalText: "#f5f3f7",
-    modalTextSecondary: "#9b949f",
-    modalTextDim: "#6f6876",
-    modalBackdrop: "rgba(8, 7, 11, 0.7)",
-    actionButtonSecondaryBackground: "rgba(255, 255, 255, 0.05)",
-    closeButtonBackground: "rgba(255, 255, 255, 0.06)",
-    closeButton: "#d6d1d9",
-    generalBorder: "rgba(255, 255, 255, 0.14)",
-    menuItemBackground: "rgba(131, 170, 255, 0.08)",
-    profileForeground: "#141218",
-    selectedOptionBorder: "rgba(131, 170, 255, 0.5)",
-    connectionIndicator: "#4fd1c5",
-    error: "#f08a8d",
+    modalBackground: "#1d1f1a",
+    modalBorder: "rgba(236, 230, 214, 0.12)",
+    modalText: "#ece6d6",
+    modalTextSecondary: "#a7a190",
+    modalTextDim: "#77725f",
+    modalBackdrop: "rgba(10, 10, 8, 0.62)",
+    actionButtonSecondaryBackground: "rgba(236, 230, 214, 0.05)",
+    closeButtonBackground: "rgba(236, 230, 214, 0.06)",
+    closeButton: "#a7a190",
+    generalBorder: "rgba(236, 230, 214, 0.15)",
+    menuItemBackground: "rgba(236, 230, 214, 0.06)",
+    profileForeground: "#1d1f1a",
+    selectedOptionBorder: "rgba(201, 93, 42, 0.6)",
+    connectionIndicator: "#87b36e",
+    error: "#d4575f",
   },
-  shadows: { ...base.shadows, dialog: "0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(131, 170, 255, 0.12)" },
+  shadows: { ...base.shadows, dialog: "0 30px 70px -20px rgba(0, 0, 0, 0.9)" },
 };
