@@ -1,0 +1,719 @@
+<!doctype html>
+<!-- Repay Relay homepage. Layout, UX and CSS follow the PortaldotL homepage (web/public/home in that repo). -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Repay Relay: reactive auto-repay on Base Sepolia</title>
+    <meta
+      name="description"
+      content="Repay Relay watches a collateral price from Reactive Lasna. When it reaches your trigger, a cross-chain callback pays down part of your loan from a reserve you funded."
+    />
+    <meta name="theme-color" content="#08070b" />
+    <meta property="og:title" content="Repay Relay: price falls, debt shrinks" />
+    <meta property="og:description" content="Reactive auto-repay for collateralized loans. Base Sepolia to Reactive Lasna and back, every hop on the record." />
+    <link rel="icon" type="image/svg+xml" href="/home/assets/img/favicon.svg" />
+    <!-- Everything is served from this origin: no third-party connections before the first paint. -->
+    <link rel="preload" href="/home/assets/fonts/inter-tight-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/home/assets/css/style.css" />
+    <noscript>
+      <!-- Without JS nothing adds .is-in, so show the data visuals in their final state. -->
+      <style>
+        .rules__bar::after, .stat__blocks i, .stat__line i { transform: none; opacity: 1; }
+        .rules__bar::before { transform: translate(-50%, -50%); }
+        .ring__val { stroke-dashoffset: calc(100 - var(--p) * 100); }
+        .wave path { stroke-dashoffset: 0; }
+        .heat__col i:nth-of-type(1) { opacity: clamp(0.07, calc(var(--v) * 4), 1); }
+        .heat__col i:nth-of-type(2) { opacity: clamp(0.07, calc(var(--v) * 4 - 1), 1); }
+        .heat__col i:nth-of-type(3) { opacity: clamp(0.07, calc(var(--v) * 4 - 2), 1); }
+        .heat__col i:nth-of-type(4) { opacity: clamp(0.07, calc(var(--v) * 4 - 3), 1); }
+      </style>
+    </noscript>
+    <script>
+      // Intro states are hidden only when JS runs; if the scripts never arrive, everything shows after 2.5s.
+      document.documentElement.classList.add("js");
+      setTimeout(function () {
+        document.documentElement.classList.add("ready");
+      }, 2500);
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <!-- Atmosphere: dot grid + vignette, then the light ribbon (bloom under sharp) -->
+    <div class="atmos" aria-hidden="true"></div>
+    <canvas id="ribbon-bloom" class="ribbon ribbon--bloom" aria-hidden="true"></canvas>
+    <canvas id="ribbon" class="ribbon" aria-hidden="true"></canvas>
+
+    <!-- ───────── Navigation ───────── -->
+    <header class="nav" id="nav">
+      <a class="brand" href="#top" aria-label="Repay Relay, back to top">
+        <img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" />
+        <span>repay relay</span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#features">Product</a>
+        <a href="#product">Proof</a>
+        <a href="#how">How it works</a>
+        <a href="https://dev.reactive.network/reactive-contracts" target="_blank" rel="noreferrer">Docs ↗</a>
+      </nav>
+      <div class="nav__right">
+        <a class="btn btn--primary btn--sm magnetic" href="/app/" data-boost>Launch app</a>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="mnav" aria-label="Open menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </header>
+    <div class="mnav" id="mnav" hidden>
+      <nav aria-label="Mobile">
+        <a href="#features">Product</a>
+        <a href="#product">Proof</a>
+        <a href="#how">How it works</a>
+        <a href="https://dev.reactive.network/reactive-contracts" target="_blank" rel="noreferrer">Docs ↗</a>
+        <a class="btn btn--primary" href="/app/">Launch app</a>
+      </nav>
+    </div>
+
+    <main id="main">
+      <!-- ───────── Hero ───────── -->
+      <section class="hero" id="top" data-scene="hero">
+        <div class="hero__copy">
+          <p class="badge mono" data-intro><i></i>reactive auto-repay / Base Sepolia ↔ Reactive Lasna</p>
+          <h1 class="hero__title">
+            <span class="line"><span data-intro-line>Price falls</span></span>
+            <span class="line"><span data-intro-line>Debt <em>shrinks</em></span></span>
+          </h1>
+          <p class="hero__lead" data-intro>
+            Repay Relay watches your collateral price from Reactive Lasna. When it reaches your trigger, a cross-chain
+            callback pays down part of your loan from a reserve you funded, before the position drifts any closer to the line
+          </p>
+          <div class="hero__ctas" data-intro>
+            <a class="btn btn--primary magnetic" href="/app/" data-boost>Launch app</a>
+            <a class="btn btn--ghost magnetic" href="#how"
+              ><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 2l7 4-7 4z" /></svg>See the repay loop</a
+            >
+          </div>
+        </div>
+
+        <div class="hero__stage">
+          <div class="hero__tilt">
+            <div class="panel dash" id="hero-dash" data-intro-dash>
+              <div class="dash__bar">
+                <span class="dash__title">Route #0 · demo position</span>
+                <span class="dash__sep"></span>
+                <span class="mono dash__meta">trigger $1,350 · target 150%</span>
+                <span class="chip chip--live mono"><i></i>watching</span>
+              </div>
+              <div class="dash__body">
+                <div class="dash__tools" aria-hidden="true">
+                  <span class="is-on"><svg viewBox="0 0 16 16"><path d="M4 2l8 6-4 1-1.5 4z" /></svg></span>
+                  <span><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" /></svg></span>
+                  <span><svg viewBox="0 0 16 16"><path d="M4 12V7a3 3 0 013-3h5m-3-2l3 2-3 2" /></svg></span>
+                </div>
+                <span class="dash__zoom mono" aria-hidden="true">100%</span>
+
+                <div class="graph" role="img" aria-label="Repay flow: a price update on Base Sepolia reaches Reactive Lasna. At or below the trigger, Lasna requests a callback and the vault repays part of the debt. Above the trigger, no callback is requested.">
+                  <svg class="graph__edges" viewBox="0 0 600 300" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="edge" x1="0" x2="1">
+                        <stop offset="0" stop-color="#83aaff" stop-opacity=".9" />
+                        <stop offset="1" stop-color="#3f91ff" stop-opacity=".45" />
+                      </linearGradient>
+                    </defs>
+                    <path id="e1" class="edge" d="M190 150 C 230 150, 225 78, 268 78" />
+                    <path id="e2" class="edge edge--dim" d="M190 150 C 230 150, 225 222, 268 222" />
+                    <path id="e3" class="edge" d="M418 78 C 452 78, 448 150, 470 150" />
+                    <circle r="3" class="packet"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#e1" /></animateMotion></circle>
+                    <circle r="3" class="packet"><animateMotion dur="2.6s" begin="1.3s" repeatCount="indefinite"><mpath href="#e3" /></animateMotion></circle>
+                  </svg>
+                  <span class="graph__label mono" style="left: 31.5%; top: 18%">≤ trigger</span>
+                  <span class="graph__label mono" style="left: 32.5%; top: 76%">above</span>
+
+                  <div class="node node--src" style="left: 2%; top: 37%" data-node>
+                    <b>Price update</b><span class="mono">oracle v3 · $1,350</span>
+                  </div>
+                  <div class="node" style="left: 44.6%; top: 12%" data-node>
+                    <b>Lasna react()</b><span class="mono">requests a callback</span>
+                  </div>
+                  <div class="node" style="left: 44.6%; top: 60%" data-node>
+                    <b>No request</b><span class="mono">debt left as is</span>
+                  </div>
+                  <div class="node node--end" style="left: 78.4%; top: 37%" data-node>
+                    <b>autoRepay</b><span class="mono">−100 mUSD</span>
+                  </div>
+                  <span class="graph__chip mono" style="left: 78.4%; top: 70%"><i></i>135% → 150%</span>
+                </div>
+
+                <div class="dash__log">
+                  <p class="mono dash__logtitle">events across both chains · example run</p>
+                  <ul class="mono">
+                    <li><i class="ok"></i><span>base sepolia</span><span>AutoRepaid</span><span class="dim">debt 1,000 → 900</span><span class="ok-t">repaid</span></li>
+                    <li><i class="ok"></i><span>lasna</span><span>RepayRequested</span><span class="dim">oracle v3</span><span class="ok-t">requested</span></li>
+                    <li><i></i><span>base sepolia</span><span>PriceUpdated</span><span class="dim">v3 · $1,350</span><span class="dim">origin</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="float-card float-card--a mono" data-intro-float>
+              <span class="dim">originTxHash + oracle version</span>
+              <b>link all three logs</b>
+            </div>
+          </div>
+        </div>
+
+        <a class="scroll-cue mono" href="#stack" aria-label="Scroll to content"><span></span>scroll</a>
+      </section>
+
+      <!-- ───────── Stack strip ───────── -->
+      <section class="stack" id="stack" data-scene="stack" aria-labelledby="stack-title">
+        <p class="stack__lead mono" id="stack-title" data-reveal>built on Reactive Network / every hop leaves a log you can open</p>
+        <ul class="stack__row" data-reveal-group>
+          <li><span class="tile"><img src="/home/assets/img/stack/base.svg" alt="" width="28" height="28" loading="lazy" /></span><b>Base Sepolia</b><span class="mono">origin + destination</span></li>
+          <li><span class="tile tile--mono" aria-hidden="true">RN</span><b>Reactive Lasna</b><span class="mono">reactive contract</span></li>
+          <li><span class="tile"><img src="/home/assets/img/stack/solidity.svg" alt="" width="28" height="28" loading="lazy" /></span><b>Solidity</b><span class="mono">0.8.29</span></li>
+          <li><span class="tile"><img src="/home/assets/img/stack/openzeppelin.svg" alt="" width="28" height="28" loading="lazy" /></span><b>OpenZeppelin</b><span class="mono">SafeERC20 · mulDiv</span></li>
+          <li><span class="tile tile--mono" aria-hidden="true">Fo</span><b>Foundry</b><span class="mono">tests + deploy</span></li>
+          <li><span class="tile"><img src="/home/assets/img/stack/viem.png" alt="" width="28" height="28" loading="lazy" /></span><b>viem</b><span class="mono">chain reads</span></li>
+          <li><span class="tile"><img src="/home/assets/img/stack/react.svg" alt="" width="28" height="28" loading="lazy" /></span><b>React</b><span class="mono">dashboard</span></li>
+        </ul>
+      </section>
+
+      <!-- ───────── Statement ───────── -->
+      <section class="statement" data-scene="statement" aria-label="Why Repay Relay">
+        <p class="eyebrow mono" data-reveal><i></i>the problem with waiting</p>
+        <p class="statement__text" data-words>
+          Collateral falls while borrowers sleep. Repay Relay lets the price itself start the repayment, from a reserve only you control
+        </p>
+      </section>
+
+      <!-- ───────── Features showcase ───────── -->
+      <section class="features" id="features" data-scene="features" aria-labelledby="features-title">
+        <header class="features__head">
+          <p class="eyebrow mono" data-reveal><i></i>one route, two chains</p>
+          <h2 id="features-title" data-reveal>Triggered by the price, <em>paid</em> from your own reserve</h2>
+        </header>
+
+        <div class="features__grid">
+          <ol class="features__list">
+            <li class="feature is-active" data-feature="0">
+              <span class="feature__num mono">01 / repay rule</span>
+              <h3>Repay exactly what the ratio needs</h3>
+              <p>
+                At or below the trigger, the vault pays debt down to a 150% collateral ratio, and never more than your
+                reserve or your per-callback limit. Type a price to run the same integer math the contract runs
+              </p>
+              <span class="feature__tags mono">min(gap, reserve, limit) · rounded down</span>
+            </li>
+            <li class="feature" data-feature="1">
+              <span class="feature__num mono">02 / react</span>
+              <h3>Lasna watches the oracle</h3>
+              <p>
+                ReactiveRepay subscribes to PriceUpdated on Base Sepolia through the system contract. It checks the chain,
+                the oracle address and the topic, and asks for a callback only when the price is at or below $1,350
+              </p>
+              <span class="feature__tags mono">onlySystem · requestCallbackV_1_0</span>
+            </li>
+            <li class="feature" data-feature="2">
+              <span class="feature__num mono">03 / callback</span>
+              <h3>A callback that proves where it came from</h3>
+              <p>
+                The callback proxy writes the reactive contract's address into the first argument of the payload. The
+                receiver accepts the call only from that proxy and only when that address is ReactiveRepay
+              </p>
+              <span class="feature__tags mono">proxy check · injected sender check</span>
+            </li>
+            <li class="feature" data-feature="3">
+              <span class="feature__num mono">04 / guards</span>
+              <h3>Late, repeated or stale: skipped</h3>
+              <p>
+                The vault applies only the newest oracle version, once per borrower, while the price is under 15 minutes
+                old. Anything else is logged as CallbackSkipped with a reason, so a late callback never moves your debt
+              </p>
+              <span class="feature__tags mono">latest version · once · 15 min freshness</span>
+            </li>
+            <li class="feature" data-feature="4">
+              <span class="feature__num mono">05 / reserve</span>
+              <h3>Your reserve, kept apart</h3>
+              <p>
+                Reserves are booked per borrower, apart from the vault's lending liquidity. Only you can withdraw yours,
+                and closing the position returns your collateral and whatever reserve is left
+              </p>
+              <span class="feature__tags mono">fundReserve · withdrawReserve · closePosition</span>
+            </li>
+          </ol>
+
+          <div class="features__stage">
+            <div class="panel stage" aria-live="polite">
+              <div class="stage__bar mono">
+                <span class="stage__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span id="stage-path">relay / position / repay rule</span>
+                <span class="stage__progress" aria-hidden="true"><i id="stage-progress"></i></span>
+              </div>
+
+              <!-- 01 Repay rule (interactive) -->
+              <div class="pv is-active" data-preview="0">
+                <div class="pv__head">
+                  <b>Repay rule</b><span class="chip mono"><i></i>target 150%</span>
+                </div>
+                <label class="field">
+                  <span class="mono">oracle price</span>
+                  <span class="field__input">
+                    <input id="rule-price" type="text" inputmode="decimal" value="1,350" autocomplete="off" aria-describedby="rule-help" />
+                    <span class="mono">USD per mCOL</span>
+                  </span>
+                </label>
+                <dl class="kv mono">
+                  <div><dt>collateral · debt</dt><dd>1 mCOL · 1,000 mUSD</dd></div>
+                  <div><dt>reserve · limit</dt><dd>150 · 120 mUSD</dd></div>
+                  <div><dt>ratio at this price</dt><dd id="rule-ratio">…</dd></div>
+                  <div><dt>debt at 150%</dt><dd id="rule-target">…</dd></div>
+                </dl>
+                <div class="hashout">
+                  <span class="mono dim" id="rule-why">repay = min(debt − target, reserve, limit)</span>
+                  <code id="rule-out" class="mono">…</code>
+                </div>
+                <p class="pv__foot mono" id="rule-help">type a price: trigger is $1,350, values are 6-decimal integers rounded down</p>
+              </div>
+
+              <!-- 02 React on Lasna -->
+              <div class="pv" data-preview="1">
+                <div class="pv__head"><b>react() on Lasna</b><span class="chip mono"><i></i>onlySystem</span></div>
+                <ul class="checks mono" id="react-checks">
+                  <li><span>log chain id</span><span class="dim">84532 · Base Sepolia</span><b>✓</b></li>
+                  <li><span>log emitter</span><span class="dim">MockOracle</span><b>✓</b></li>
+                  <li><span>topic 0</span><span class="dim">PriceUpdated</span><b>✓</b></li>
+                  <li><span>price at or below trigger</span><span class="dim">1,350 ≤ 1,350</span><b>✓</b></li>
+                  <li><span>version not yet requested</span><span class="dim">v3</span><b>✓</b></li>
+                </ul>
+                <div class="hashout">
+                  <span class="mono dim">then, from Lasna</span>
+                  <code class="mono" id="react-out">requestCallbackV_1_0 → RepayRequested(v3, originTxHash)</code>
+                </div>
+                <button type="button" class="btn btn--ghost btn--sm replay" id="react-replay">Run the checks again</button>
+              </div>
+
+              <!-- 03 Callback -->
+              <div class="pv" data-preview="2">
+                <div class="pv__head"><b>Callback on Base Sepolia</b><span class="chip mono"><i></i>proxy 0x476F…3585</span></div>
+                <div class="hashout">
+                  <span class="mono dim">payload encoded on Lasna</span>
+                  <code class="mono">executeRepay(<s>address(0)</s>, 3, originTxHash)</code>
+                </div>
+                <div class="hashout">
+                  <span class="mono dim">payload delivered by the callback proxy</span>
+                  <code class="mono">executeRepay(<em>ReactiveRepay</em>, 3, originTxHash)</code>
+                </div>
+                <dl class="kv mono">
+                  <div><dt>msg.sender</dt><dd><span class="ok-t">callback proxy ✓</span></dd></div>
+                  <div><dt>reactiveSender</dt><dd><span class="ok-t">ReactiveRepay ✓</span></dd></div>
+                  <div><dt>borrower · vault</dt><dd>immutable in receiver</dd></div>
+                  <div><dt>next call</dt><dd>vault.autoRepay(borrower, 3, originTxHash)</dd></div>
+                </dl>
+                <p class="pv__foot mono">a call from any other sender reverts before the vault is touched</p>
+              </div>
+
+              <!-- 04 Guards -->
+              <div class="pv" data-preview="3">
+                <div class="pv__head"><b>Callback guards</b><span class="chip mono"><i></i>vault checks</span></div>
+                <div class="phases">
+                  <div class="phases__track">
+                    <span class="ph ph--commit"><b>Posted</b><i class="mono">oracle v3</i></span>
+                    <span class="ph ph--reveal"><b>Fresh</b><i class="mono">15 min window</i></span>
+                    <span class="ph ph--award"><b>Stale</b><i class="mono">skipped</i></span>
+                    <span class="phases__now" id="phase-now"><em class="mono">now</em></span>
+                  </div>
+                </div>
+                <ul class="calls mono">
+                  <li><span>v3</span><span>autoRepay()</span><span class="ok-t">ok · AutoRepaid</span></li>
+                  <li><span>v3 again</span><span>autoRepay()</span><span class="warn-t">skipped · already paid</span></li>
+                  <li><span>v2 late</span><span>autoRepay()</span><span class="warn-t">skipped · not latest</span></li>
+                  <li><span>v3 +16 min</span><span>autoRepay()</span><span class="warn-t">skipped · stale price</span></li>
+                  <li><span>stranger</span><span>autoRepay()</span><span class="bad-t">reverted · not receiver</span></li>
+                </ul>
+                <p class="pv__foot mono">a transaction that lands is not the same as debt repaid: the dashboard shows both</p>
+              </div>
+
+              <!-- 05 Reserve -->
+              <div class="pv" data-preview="4">
+                <div class="pv__head"><b>Reserve ledger</b><span class="chip mono"><i></i>per borrower</span></div>
+                <div class="cmp">
+                  <div class="cmp__head mono"><span></span><span>reserve</span><span>debt</span><span>ratio</span></div>
+                  <div class="cmp__row"><b>You</b><span class="bar" style="--v: 0.25"></span><span class="bar" style="--v: 0.9"></span><span class="mono">150%</span></div>
+                  <div class="cmp__row"><b>Borrower B</b><span class="bar" style="--v: 1"></span><span class="bar" style="--v: 0.6"></span><span class="mono">225%</span></div>
+                </div>
+                <dl class="kv mono">
+                  <div><dt>withdrawReserve</dt><dd>the borrower only</dd></div>
+                  <div><dt>closePosition</dt><dd>collateral + leftover reserve back</dd></div>
+                  <div><dt>config version</dt><dd>rises on every reopen</dd></div>
+                </dl>
+                <div class="flag">
+                  <span class="flag__icon" aria-hidden="true">!</span>
+                  <p><b>Reopened position:</b> a callback for an oracle version from before the reopen is skipped, so it can't touch the new loan</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── Product experience ───────── -->
+      <section class="product" id="product" data-scene="product" aria-labelledby="product-title">
+        <div class="product__glow" aria-hidden="true"></div>
+        <header class="product__head">
+          <p class="eyebrow mono" data-reveal><i></i>proof of execution</p>
+          <h2 id="product-title" data-reveal>Every repay is <em>on the record</em></h2>
+          <p class="product__lead" data-reveal>
+            The dashboard rebuilds each run from real logs: the price update on Base Sepolia, the request on Lasna and the
+            callback back on Base Sepolia, joined by origin tx hash and oracle version
+          </p>
+        </header>
+
+        <div class="product__scene">
+          <div class="product__screen panel" id="product-screen">
+            <div class="res">
+              <aside class="res__side">
+                <span class="brand brand--sm"><img src="/home/assets/img/relay-mark.svg" alt="" width="22" height="22" /><span>repay relay</span></span>
+                <span class="res__nav is-on">Position</span>
+                <span class="res__nav">Reserve</span>
+                <span class="res__nav">Protection</span>
+                <span class="res__nav">Oracle</span>
+                <p class="mono dim res__group">proof of execution</p>
+                <span class="res__nav">Runs</span>
+                <span class="res__nav">Explorer links</span>
+                <span class="res__nav">Manifest</span>
+              </aside>
+
+              <div class="res__main">
+                <div class="res__top">
+                  <div>
+                    <p class="mono dim">route #0 · run v3 · example</p>
+                    <b class="res__title">Demo position</b>
+                  </div>
+                  <span class="chip chip--ok mono"><i></i>debt repaid · 3 of 3 logs</span>
+                </div>
+
+                <div class="res__grid">
+                  <div class="res__card res__chart">
+                    <div class="res__cardhead"><b>Collateral ratio</b><span class="mono dim">per price update · target 150%</span></div>
+                    <div class="iso" role="img" aria-label="Collateral ratio: 180% at $1,800, 140% at $1,400, 135% at $1,350 before the repay, 150% after it.">
+                      <div class="iso__bar" style="--h: 1"><span class="iso__val mono">180%</span><i></i><span class="iso__lab mono">$1,800</span></div>
+                      <div class="iso__bar" style="--h: 0.78"><span class="iso__val mono">140%</span><i></i><span class="iso__lab mono">$1,400</span></div>
+                      <div class="iso__bar" style="--h: 0.75"><span class="iso__val mono">135%</span><i></i><span class="iso__lab mono">$1,350</span></div>
+                      <div class="iso__bar is-win" style="--h: 0.83"><span class="iso__val mono">150%</span><i></i><span class="iso__lab mono">repaid</span></div>
+                    </div>
+                  </div>
+
+                  <div class="res__card res__table">
+                    <div class="res__cardhead"><b>Run v3</b><span class="mono dim">one log per hop</span></div>
+                    <ul class="mono">
+                      <li><span>1</span><span class="dim">PriceUpdated · base</span><span class="ok-t">✓</span></li>
+                      <li><span>2</span><span class="dim">RepayRequested · lasna</span><span class="ok-t">✓</span></li>
+                      <li class="is-win"><span>3</span><span class="dim">AutoRepaid · base</span><span class="ok-t">✓ repaid</span></li>
+                      <li><span>Δ</span><span class="dim">debt 1,000 → 900 mUSD</span><span>−100</span></li>
+                      <li><span>Δ</span><span class="dim">reserve 150 → 50 mUSD</span><span>−100</span></li>
+                      <li><span>v2</span><span class="dim">$1,400 · above trigger</span><span class="dim">no request</span></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="res__award">
+                  <span class="mono dim">latency</span>
+                  <span class="mono">callback block − price block</span>
+                  <span class="mono dim">resolution</span>
+                  <span class="mono">1 s block timestamps</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="float-card float-card--rep panel" data-speed="0.35">
+            <span class="mono dim">collateral ratio</span>
+            <b class="float-card__big">150%</b>
+            <span class="mono dim">restored at $1,350</span>
+          </div>
+          <div class="float-card float-card--disp panel" data-speed="0.6">
+            <span class="mono dim">price update v2 · $1,400</span>
+            <b>Above the trigger, so Lasna stays quiet</b>
+            <span class="chip chip--ok mono"><i></i>no callback · as designed</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── Brand panel: grows to full bleed while you scroll ───────── -->
+      <section class="seal" data-scene="seal" aria-labelledby="seal-title">
+        <div class="seal__sticky">
+          <div class="seal__panel" id="seal-panel">
+            <p class="seal__kicker mono">what every second buys</p>
+            <h2 class="seal__text" id="seal-title" data-seal-words>
+              The price moves once. Your reserve <em>answers</em> before you open the app
+            </h2>
+            <span class="seal__tile" aria-hidden="true"><img src="/home/assets/img/relay-mark.svg" alt="" width="34" height="34" /></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── Trust model ───────── -->
+      <section class="trust" id="trust" data-scene="trust" aria-labelledby="trust-title">
+        <header class="sec-head">
+          <div>
+            <p class="eyebrow mono" data-reveal><i></i>trust model</p>
+            <h2 id="trust-title" data-reveal>Two chains, <em>one</em> rule set</h2>
+          </div>
+          <p class="sec-head__aside" data-reveal>
+            The trigger is checked on Lasna and again in the vault. A callback has to pass both, and every decision,
+            including a skip, leaves a log
+          </p>
+        </header>
+
+        <div class="trust__grid" data-reveal-group>
+          <article class="card panel" data-glow>
+            <h3>Every hop is authenticated</h3>
+            <p>Only the system contract can call react. Only the callback proxy, carrying ReactiveRepay's address, can reach the receiver. Only the receiver can call autoRepay</p>
+            <div class="hub" role="img" aria-label="The vault at the centre, connected to the oracle, the Lasna reactive contract, the callback proxy and the borrower.">
+              <svg class="hub__lines" viewBox="0 0 400 180" preserveAspectRatio="none" aria-hidden="true">
+                <path id="h1" d="M200 90 C 150 90, 130 40, 70 40" />
+                <path id="h2" d="M200 90 C 150 90, 130 140, 70 140" />
+                <path id="h3" d="M200 90 C 250 90, 270 40, 330 40" />
+                <path id="h4" d="M200 90 C 250 90, 270 140, 330 140" />
+                <circle r="2.5" class="packet"><animateMotion dur="2.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#h1" /></animateMotion></circle>
+                <circle r="2.5" class="packet"><animateMotion dur="2.4s" begin=".6s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#h2" /></animateMotion></circle>
+                <circle r="2.5" class="packet"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#h3" /></animateMotion></circle>
+                <circle r="2.5" class="packet"><animateMotion dur="2.4s" begin="1.8s" repeatCount="indefinite"><mpath href="#h4" /></animateMotion></circle>
+              </svg>
+              <span class="hub__sat mono" style="left: 17.5%; top: 22%"><b>OR</b>oracle</span>
+              <span class="hub__sat mono" style="left: 17.5%; top: 78%"><b>BR</b>borrower</span>
+              <span class="hub__sat mono" style="left: 82.5%; top: 22%"><b>LA</b>lasna</span>
+              <span class="hub__sat mono" style="left: 82.5%; top: 78%"><b>PX</b>proxy</span>
+              <span class="hub__core"><img src="/home/assets/img/relay-mark.svg" alt="" width="34" height="34" /></span>
+            </div>
+            <p class="card__foot mono">react · requestCallback · executeRepay · autoRepay</p>
+          </article>
+
+          <article class="card panel" data-glow>
+            <h3>Ratios you can read before you fund</h3>
+            <p>Each threshold is a constant in the vault. The liquidation line is drawn for reference only: this MVP simulates the loan and never liquidates</p>
+            <ul class="rules mono" aria-label="Vault ratios, on a scale up to 200%">
+              <li><span>minimum ratio to open<small>openPosition</small></span><i class="rules__bar" style="--v: 0.8"></i><b>160%</b></li>
+              <li><span>ratio after an auto-repay<small>autoRepay target</small></span><i class="rules__bar" style="--v: 0.75"></i><b>150%</b></li>
+              <li><span>simulated liquidation line<small>display only</small></span><i class="rules__bar" style="--v: 0.6"></i><b>120%</b></li>
+            </ul>
+            <p class="card__foot mono"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 5V3.6a2.5 2.5 0 015 0V5M2.5 5h7v5h-7z" /></svg>your reserve is withdrawable by you alone</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ───────── Borrower's desk bento ───────── -->
+      <section class="desk" id="desk" data-scene="desk" aria-labelledby="desk-title">
+        <header class="sec-head">
+          <div>
+            <p class="eyebrow mono" data-reveal><i></i>borrower view</p>
+            <h2 id="desk-title" data-reveal>A <em>price drop,</em> seen from Repay Relay</h2>
+          </div>
+          <p class="sec-head__aside" data-reveal>
+            The screen a borrower keeps open: how much room is left, what the reserve has spent and where each hop can be
+            checked. Example run, real mechanics
+          </p>
+        </header>
+
+        <div class="desk__grid" data-reveal-group>
+          <article class="tile-card tile-card--wide panel" data-glow>
+            <div class="tile-card__head mono">
+              <span class="dim">room above the simulated liquidation line, per price update</span>
+              <span class="chip chip--live mono"><i></i>repaid at v3</span>
+            </div>
+            <div class="heat" role="img" aria-label="Room above the 120% line per oracle version: largest at v1, lowest at v2, restored by the repay at v3, rising again through v6; the position is closed at v7.">
+              <div class="heat__col" style="--v: 1"><i></i><i></i><i></i><i></i><span>v1</span></div>
+              <div class="heat__col" style="--v: 0.33"><i></i><i></i><i></i><i></i><span>v2</span></div>
+              <div class="heat__col is-peak" style="--v: 0.5"><i></i><i></i><i></i><i></i><span>v3</span></div>
+              <div class="heat__col" style="--v: 0.55"><i></i><i></i><i></i><i></i><span>v4</span></div>
+              <div class="heat__col" style="--v: 0.63"><i></i><i></i><i></i><i></i><span>v5</span></div>
+              <div class="heat__col" style="--v: 0.78"><i></i><i></i><i></i><i></i><span>v6</span></div>
+              <div class="heat__col is-closed" style="--v: 0"><i></i><i></i><i></i><i></i><span>closed</span></div>
+            </div>
+          </article>
+
+          <article class="tile-card panel" data-glow>
+            <span class="tile-card__label mono dim">reserve spent</span>
+            <div class="ring" style="--p: 0.67" role="img" aria-label="100 of 150 mUSD reserve spent, 67 percent">
+              <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" /><circle class="ring__val" cx="50" cy="50" r="42" pathLength="100" /></svg>
+              <b><span data-count="67">67</span>%</b>
+            </div>
+            <p class="tile-card__note">100 of 150 mUSD went to the v3 repay, 50 stay ready</p>
+          </article>
+
+          <article class="tile-card panel" data-glow>
+            <span class="tile-card__label mono dim">hops in one run</span>
+            <div class="faces" aria-hidden="true"><i>B</i><i>L</i><i>B</i></div>
+            <p class="tile-card__big"><span data-count="3">3</span> <small>logs per repay</small></p>
+            <p class="tile-card__note">Price update and callback on Base Sepolia, the request on Lasna</p>
+          </article>
+
+          <article class="tile-card panel" data-glow>
+            <span class="tile-card__label mono dim">debt and reserve</span>
+            <svg class="wave" viewBox="0 0 240 70" preserveAspectRatio="none" aria-hidden="true">
+              <path class="wave__a" pathLength="100" d="M0 12 L 140 12 C 158 12, 160 24, 178 24 L 240 24" />
+              <path class="wave__b" pathLength="100" d="M0 44 L 140 44 C 158 44, 160 62, 178 62 L 240 62" />
+            </svg>
+            <p class="wave__legend mono"><span><i></i>debt</span><span><i></i>reserve</span></p>
+          </article>
+
+          <article class="tile-card panel" data-glow>
+            <span class="tile-card__label mono dim">where each hop is checked</span>
+            <ul class="cids mono">
+              <li><span>price update</span><span class="dim">sepolia.basescan.org</span></li>
+              <li><span>reactive request</span><span class="dim">lasna.reactscan.net</span></li>
+              <li><span>callback</span><span class="dim">sepolia.basescan.org</span></li>
+            </ul>
+            <p class="tile-card__note">Every hash in the deploy manifest opens on its own chain's explorer</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ───────── Numbers ───────── -->
+      <section class="numbers" data-scene="numbers" aria-labelledby="numbers-title">
+        <header class="sec-head">
+          <div>
+            <p class="eyebrow mono" data-reveal><i></i>by the numbers</p>
+            <h2 id="numbers-title" data-reveal>Numbers set in <em>code</em></h2>
+          </div>
+          <p class="sec-head__aside" data-reveal>Constants of the vault and the reactive route, not marketing averages</p>
+        </header>
+        <div class="numbers__row" data-reveal-group>
+          <div class="stat">
+            <span class="mono dim">ratio after a repay</span>
+            <b><span data-count="150">150</span>%</b>
+            <span class="mono dim">target, or as close as reserve and limit allow</span>
+            <div class="stat__blocks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="stat">
+            <span class="mono dim">price freshness</span>
+            <b><span data-count="15">15</span></b>
+            <span class="mono dim">minutes before an oracle price counts as stale</span>
+            <div class="stat__line" aria-hidden="true"><i></i></div>
+          </div>
+          <div class="stat">
+            <span class="mono dim">borrower actions at the trigger</span>
+            <b><span data-count="0">0</span></b>
+            <span class="mono dim">clicks needed when the price crosses the line</span>
+            <div class="stat__line stat__line--empty" aria-hidden="true"><i></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── How it works ───────── -->
+      <section class="how" id="how" data-scene="how" aria-labelledby="how-title">
+        <header class="how__head">
+          <p class="eyebrow mono" data-reveal><i></i>how it works</p>
+          <h2 id="how-title" data-reveal>From price to repay in <em>four steps</em></h2>
+        </header>
+        <div class="how__row">
+          <svg class="how__trail" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="trail" x1="0" x2="1">
+                <stop offset="0" stop-color="#0b53bf" />
+                <stop offset=".5" stop-color="#83aaff" />
+                <stop offset="1" stop-color="#5fcdff" />
+              </linearGradient>
+            </defs>
+            <path class="how__trail-base" d="M0 70 C 200 20, 330 110, 600 60 S 1000 10, 1200 60" />
+            <path class="how__trail-line" id="how-trail" d="M0 70 C 200 20, 330 110, 600 60 S 1000 10, 1200 60" />
+          </svg>
+          <ol class="how__steps">
+            <li class="step panel" data-step>
+              <span class="step__num mono">01</span>
+              <h3>Open</h3>
+              <p>Lock test collateral and borrow mUSD at a ratio of at least 160%</p>
+            </li>
+            <li class="step panel" data-step>
+              <span class="step__num mono">02</span>
+              <h3>Protect</h3>
+              <p>Fund a reserve, set a limit per callback and switch protection on</p>
+            </li>
+            <li class="step panel" data-step>
+              <span class="step__num mono">03</span>
+              <h3>React</h3>
+              <p>The oracle posts a price at or below $1,350 and Lasna requests a callback</p>
+            </li>
+            <li class="step panel" data-step>
+              <span class="step__num mono">04</span>
+              <h3>Repay</h3>
+              <p>The vault pays down debt from your reserve, and the dashboard links all three transactions</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ───────── Final CTA ───────── -->
+      <section class="cta" data-scene="cta" aria-labelledby="cta-title">
+        <div class="cta__grid">
+          <div class="cta__side panel" data-glow>
+            <a class="brand" href="#top"><img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" /><span>repay relay</span></a>
+            <span class="cta__mark" aria-hidden="true"><img src="/home/assets/img/relay-mark.svg" alt="" width="160" height="160" /></span>
+            <p>Reactive auto-repay for collateralized loans, built for the Reactive Omni Buildathon</p>
+            <div class="cta__links mono">
+              <span class="dim">read more</span>
+              <a href="https://dev.reactive.network/reactive-contracts" target="_blank" rel="noreferrer">docs ↗</a>
+              <a href="https://lasna.reactscan.net" target="_blank" rel="noreferrer">lasna ↗</a>
+            </div>
+          </div>
+          <div class="cta__card">
+            <p class="cta__kicker mono">what now</p>
+            <h2 id="cta-title" class="cta__title">Every second <em>counts</em></h2>
+            <p class="cta__lead">Open the demo position on Base Sepolia, drop the price and watch the callback land. Connect a wallet to start</p>
+            <div class="cta__actions">
+              <a class="btn btn--ink btn--lg magnetic" href="/app/" data-boost>Launch app</a>
+              <a class="btn btn--onbrand btn--lg magnetic" href="https://dev.reactive.network/callback-contracts" target="_blank" rel="noreferrer">Read the docs</a>
+            </div>
+          </div>
+        </div>
+        <ul class="cta__status mono">
+          <li><i></i>Base Sepolia ↔ Reactive Lasna</li>
+          <li><i></i>mUSD is a test token, no real funds</li>
+          <li><i></i>every repay linked by origin tx hash</li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- ───────── Footer ───────── -->
+    <footer class="footer" data-scene="footer">
+      <div class="footer__main">
+        <div class="footer__brand">
+          <a class="brand" href="#top"><img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" /><span>repay relay</span></a>
+          <p>
+            A testnet demo of reactive debt protection. A price update on Base Sepolia reaches Reactive Lasna, and a
+            callback repays part of the loan from the borrower's own reserve, with every hop on the record
+          </p>
+        </div>
+        <nav class="footer__col" aria-label="Product">
+          <h4 class="mono">product</h4>
+          <a href="/app/">Launch app</a>
+          <a href="#features">Repay rule</a>
+          <a href="#product">Proof of execution</a>
+          <a href="#how">How it works</a>
+        </nav>
+        <nav class="footer__col" aria-label="Explorers">
+          <h4 class="mono">explorers</h4>
+          <a href="https://sepolia.basescan.org" target="_blank" rel="noreferrer">Base Sepolia ↗</a>
+          <a href="https://lasna.reactscan.net" target="_blank" rel="noreferrer">Reactive Lasna ↗</a>
+        </nav>
+        <nav class="footer__col" aria-label="Resources">
+          <h4 class="mono">resources</h4>
+          <a href="https://dev.reactive.network/reactive-contracts" target="_blank" rel="noreferrer">Reactive contracts ↗</a>
+          <a href="https://dev.reactive.network/callback-contracts" target="_blank" rel="noreferrer">Callback contracts ↗</a>
+          <a href="https://dev.reactive.network/origins-and-destinations" target="_blank" rel="noreferrer">Origins and destinations ↗</a>
+          <a href="https://blog.reactive.network/reactive-omni-buildathon-thirty-days-to-find-out-what-one-second-buys/" target="_blank" rel="noreferrer">Buildathon brief ↗</a>
+        </nav>
+      </div>
+      <p class="footer__word" aria-hidden="true">relay</p>
+      <div class="footer__bottom mono">
+        <span>© 2026 Repay Relay</span>
+        <span>testnet demo · no real funds</span>
+      </div>
+    </footer>
+
+    <script src="/home/assets/js/vendor/gsap.min.js" defer></script>
+    <script src="/home/assets/js/vendor/ScrollTrigger.min.js" defer></script>
+    <script src="/home/assets/js/ribbon.js" defer></script>
+    <script src="/home/assets/js/main.js" defer></script>
+  </body>
+</html>
