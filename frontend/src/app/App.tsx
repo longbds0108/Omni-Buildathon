@@ -326,12 +326,7 @@ function ModeBadge() {
 }
 
 function ModeNote() {
-  if (dataMode === "testnet")
-    return (
-      <p className="side__note side__note--live">
-        <b>Testnet data.</b> Read from the deployed contracts on Base Sepolia and Reactive Lasna. Actions are real transactions.
-      </p>
-    );
+  if (dataMode === "testnet") return null;
   if (dataMode === "local")
     return (
       <p className="side__note">

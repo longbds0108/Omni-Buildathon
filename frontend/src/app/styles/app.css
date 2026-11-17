@@ -339,12 +339,6 @@ button {
 .sync-banner + .content {
   padding-top: 18px;
 }
-.side__note--live {
-  border-color: rgba(135, 179, 110, 0.35);
-}
-.side__note--live b {
-  color: var(--good);
-}
 
 /* ───────── Sidebar ───────── */
 
