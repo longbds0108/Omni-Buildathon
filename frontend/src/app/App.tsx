@@ -5,7 +5,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useSwitchChain } from "wagmi";
 import { fmtAgo, fmtPrice, shortHex } from "./lib/format";
-import { isLocalSimulation } from "./lib/manifest";
+import { contracts, dataMode, manifest } from "./lib/manifest";
 import { E6, parseUnits } from "./lib/math";
 import { STATUS_LABEL, isFresh } from "./lib/sim";
 import { actions, useNow, useSim } from "./lib/store";
@@ -281,6 +281,7 @@ function PushPrice() {
           <p className="push__title">Operator · new oracle price</p>
           <p className="push__note">
             Now {fmtPrice(s.oracle.priceE6)} at v{s.oracle.version}. Trigger {fmtPrice(s.routeTriggerE6)}.
+            {manifest && <> Signed by the operator {shortHex(contracts.operator)}.</>}
           </p>
           <label className="field__box" htmlFor="push-price">
             <span className="dim">$</span>
@@ -307,6 +308,50 @@ function PushPrice() {
         </div>
       )}
     </div>
+  );
+}
+
+/* ───────── Where the data comes from ───────── */
+function ModeBadge() {
+  const s = useSim();
+  if (dataMode === "sim") return <span className="simtag simtag--top">Local simulation</span>;
+  if (dataMode === "local") return <span className="simtag simtag--top" title="Two anvil chains and a relayer standing in for Reactive Network">Local simulation · anvil</span>;
+  const src = s.source;
+  return (
+    <span className={`live-tag ${src?.error ? "is-bad" : ""}`} title={src?.syncedAt ? `Synced ${new Date(src.syncedAt).toLocaleTimeString()}` : "Syncing"}>
+      <i />
+      {src?.error ? "RPC error" : src?.syncing ? "Syncing…" : "Base Sepolia · Lasna"}
+    </span>
+  );
+}
+
+function ModeNote() {
+  if (dataMode === "testnet")
+    return (
+      <p className="side__note side__note--live">
+        <b>Testnet data.</b> Read from the deployed contracts on Base Sepolia and Reactive Lasna. Actions are real transactions.
+      </p>
+    );
+  if (dataMode === "local")
+    return (
+      <p className="side__note">
+        <b>Local simulation.</b> Two local chains, with a relayer playing Reactive Network. Real contracts, test data.
+      </p>
+    );
+  return (
+    <p className="side__note">
+      <b>Local simulation.</b> No deployment loaded. Same math as the vault, nothing sent on chain.
+    </p>
+  );
+}
+
+function SyncBanner() {
+  const s = useSim();
+  if (!s.source?.error) return null;
+  return (
+    <p className="sync-banner" role="alert">
+      Can't reach the chain right now: {s.source.error}. Showing the last data read. Retrying every few seconds.
+    </p>
   );
 }
 
@@ -384,11 +429,7 @@ function Shell({ children }: { children: ReactNode }) {
             ))}
           </ul>
         </nav>
-        {isLocalSimulation && (
-          <p className="side__note">
-            <b>Local simulation.</b> Contracts are not deployed yet. Same math as the vault, nothing sent on chain.
-          </p>
-        )}
+        <ModeNote />
         <Profile />
       </aside>
       <button className="scrim" aria-label="Close menu" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)} />
@@ -399,13 +440,14 @@ function Shell({ children }: { children: ReactNode }) {
         </button>
         <GlobalSearch />
         <div className="top__right">
-          {isLocalSimulation && <span className="simtag simtag--top">Local simulation</span>}
+          <ModeBadge />
           <OracleChip />
           <PushPrice />
           <WalletAvatar />
         </div>
       </header>
 
+      <SyncBanner />
       <main id="main" className="content">
         <div className="page" key={loc.pathname}>
           {children}

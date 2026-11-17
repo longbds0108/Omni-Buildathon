@@ -21,7 +21,7 @@ const appFallback = (): Plugin => {
 export default defineConfig({
   plugins: [react(), appFallback()],
   build: {
-    target: "es2020",
+    target: "es2022",
     rollupOptions: { input: { home: here("index.html"), app: here("app/index.html") } },
   },
 });

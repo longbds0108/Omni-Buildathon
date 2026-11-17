@@ -7,7 +7,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "relayer": "node scripts/local-relayer.mjs"
   },
   "devDependencies": {
     "@types/react": "18.3.12",

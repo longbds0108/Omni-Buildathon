@@ -256,6 +256,9 @@
   }
 
   gsap.registerPlugin(ScrollTrigger);
+  // A phone's toolbar showing or hiding while you scroll only changes the height: don't re-measure every trigger
+  // for that, it made the page jump.
+  ScrollTrigger.config({ ignoreMobileResize: true });
   gsap.defaults({ ease: "expo.out" });
   root.classList.add("has-motion"); // turns on the pinned brand panel
 
@@ -326,21 +329,18 @@
     .to(nodes, { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.1 }, 0.95)
     .to(solidEdges, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut", stagger: 0.25 }, 1.15)
     .to(dimEdges, { opacity: 1, duration: 0.8 }, 1.3)
-    .to(floatA, { opacity: 1, y: 0, duration: 1 }, 1.5)
-    .add(heroScroll);
+    .to(floatA, { opacity: 1, y: 0, duration: 1 }, 1.5);
 
   /* ───────── Hero → next section ───────── */
 
-  function heroScroll() {
-    // Copy lifts away at full brightness; the dashboard flattens, grows slightly and rises as you scroll out of the hero.
+  // Set up straight away (not after the intro), and only on wide screens: it moves the wrappers, never the elements
+  // the intro animates, so scrolling during the intro can't make anything jump. Touch screens scroll the hero as is.
+  gsap.matchMedia().add("(min-width: 861px)", () => {
     gsap
-      .timeline({ scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 0.9 } })
-      .to(".hero__copy", { y: -150, ease: "none" }, 0)
-      .to(dash, { rotationY: 0, rotationX: 0, ease: "none" }, 0)
-      .to(".hero__stage", { y: -70, scale: 1.05, ease: "none" }, 0)
-      .to(floatA, { y: -60, opacity: 0, ease: "none" }, 0);
-    ScrollTrigger.refresh();
-  }
+      .timeline({ scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 0.6 } })
+      .to(".hero__copy", { y: -120, ease: "none" }, 0)
+      .to(".hero__stage", { y: -60, scale: 1.04, ease: "none" }, 0);
+  });
 
   // Pointer tilt on the hero dashboard (desktop only)
   if (finePointer) {
@@ -362,8 +362,8 @@
     statement.innerHTML = words.map((w) => `<span class="w">${w} </span>`).join("");
     gsap.fromTo(
       $$(".w", statement),
-      { opacity: 0.13 },
-      { opacity: 1, ease: "none", stagger: 0.06, scrollTrigger: { trigger: statement, start: "top 78%", end: "bottom 42%", scrub: 0.6 } },
+      { opacity: 0.35 },
+      { opacity: 1, ease: "none", stagger: 0.06, scrollTrigger: { trigger: statement, start: "top 85%", end: "center 55%", scrub: 0.4 } },
     );
   }
 
@@ -397,18 +397,24 @@
 
   /* ───────── Product: the results screen tilts up into place ───────── */
 
-  gsap.fromTo(
-    "#product-screen",
-    { rotationX: 34, y: 80, scale: 0.88, opacity: 0.35 },
-    {
-      rotationX: 0,
-      y: 0,
-      scale: 1,
-      opacity: 1,
-      ease: "none",
-      scrollTrigger: { trigger: ".product__scene", start: "top 98%", end: "top 28%", scrub: 0.9 },
-    },
-  );
+  gsap.matchMedia()
+    .add("(min-width: 861px)", () => {
+      gsap.fromTo(
+        "#product-screen",
+        { rotationX: 30, y: 70, scale: 0.9, opacity: 0.75 },
+        {
+          rotationX: 0,
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          ease: "none",
+          scrollTrigger: { trigger: ".product__scene", start: "top 98%", end: "top 55%", scrub: 0.6 },
+        },
+      );
+    })
+    .add("(max-width: 860px)", () => {
+      gsap.from("#product-screen", { y: 40, opacity: 0, duration: 1, scrollTrigger: { trigger: ".product__scene", start: "top 88%", once: true } });
+    });
   gsap.from(".iso__bar i", {
     scaleY: 0,
     duration: 1.4,
@@ -493,8 +499,8 @@
       .join("");
     gsap.fromTo(
       $$(".w", sealText),
-      { opacity: 0.25 },
-      { opacity: 1, ease: "none", stagger: 0.08, scrollTrigger: { trigger: ".seal", start: "top 20%", end: "bottom 90%", scrub: 0.6 } },
+      { opacity: 0.45 },
+      { opacity: 1, ease: "none", stagger: 0.08, scrollTrigger: { trigger: ".seal", start: "top 60%", end: "top -15%", scrub: 0.4 } },
     );
   }
 

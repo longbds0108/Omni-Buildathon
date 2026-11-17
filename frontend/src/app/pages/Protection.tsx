@@ -2,6 +2,7 @@ import { useState } from "react";
 import { fmtMusd, fmtPrice } from "../lib/format";
 import { parseUnits, repayPlan } from "../lib/math";
 import { actions, useSim } from "../lib/store";
+import { CHAINS } from "../lib/manifest";
 import { Card, Empty, Field, PageHead, Pill, Row, SimTag, Stat, useNotify } from "../components/ui";
 import { Link } from "react-router-dom";
 
@@ -90,8 +91,8 @@ export function Protection() {
       <div className="grid grid--2">
         <Card title="Triggers" note="The route and the vault each check the price" actions={<Pill tone={triggersMatch ? "ok" : "bad"}>{triggersMatch ? "Match" : "Mismatch"}</Pill>}>
           <div className="kvs">
-            <Row k="Route trigger · ReactiveRepay on Lasna" v={fmtPrice(s.routeTriggerE6)} />
-            <Row k="Vault trigger · LendingVault on Base Sepolia" v={fmtPrice(p.triggerE6)} />
+            <Row k={`Route trigger · ReactiveRepay on ${CHAINS.lasna.name}`} v={fmtPrice(s.routeTriggerE6)} />
+            <Row k={`Vault trigger · LendingVault on ${CHAINS.base.name}`} v={fmtPrice(p.triggerE6)} />
             <Row k="Target after repay" v="150%" />
             <Row k="Price freshness" v="15 min" />
           </div>

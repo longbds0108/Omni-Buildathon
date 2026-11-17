@@ -4,6 +4,8 @@ import { fmtClock, fmtCol, fmtMusd, fmtPct, fmtPrice, fmtUsd } from "../lib/form
 import { collateralValueE6, parseUnits, priceAtRatioE6, ratioBps, BPS, LIQ_BPS, OPEN_MIN_BPS, TARGET_BPS } from "../lib/math";
 import { isFresh } from "../lib/sim";
 import { actions, useNow, useSim } from "../lib/store";
+import { contracts, dataMode } from "../lib/manifest";
+import { shortHex } from "../lib/format";
 import { Card, Field, PageHead, Pill, RatioMeter, Row, SimTag, Stat, TxHash, useNotify, ratioTone } from "../components/ui";
 
 const POSITION_EVENTS = new Set(["PositionOpened", "Repaid", "AutoRepaid", "PositionClosed", "Approval"]);
@@ -20,7 +22,12 @@ export function PositionPage() {
       <PageHead
         eyebrow="Position"
         title={p.open ? <>Your <em>loan</em></> : <>Open a <em>loan</em></>}
-        lead="Collateral goes into the vault, mUSD comes out. Interest is zero. Opening needs at least 160% and a price younger than 15 minutes."
+        lead={
+          <>
+            Collateral goes into the vault, mUSD comes out. Interest is zero. Opening needs at least 160% and a price younger than 15 minutes.
+            {dataMode !== "sim" && <> This demo loan belongs to {shortHex(contracts.borrower)}: connect that wallet to act on it.</>}
+          </>
+        }
       >
         <SimTag />
       </PageHead>

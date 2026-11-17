@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fmtClock, fmtMusd, fmtPrice } from "../lib/format";
-import { CHAINS } from "../lib/manifest";
+import { CHAINS, addressUrl, manifest } from "../lib/manifest";
+import { shortHex } from "../lib/format";
 import { STATUS_LABEL, type RunStatus } from "../lib/sim";
 import { useSim } from "../lib/store";
 import { Card, PageHead, RunLink, SimTag, StatusChip, TxHash, fmtLatency } from "../components/ui";
@@ -38,6 +39,8 @@ export function Activity() {
           Event log <span className="mono dim">{s.events.length}</span>
         </button>
       </div>
+
+      {manifest && <Deployment />}
 
       {tab === "runs" ? (
         <Card>
@@ -123,5 +126,58 @@ export function Activity() {
         </Card>
       )}
     </>
+  );
+}
+
+/* Every address and deployment transaction from the manifest, linked to its explorer. */
+function Deployment() {
+  const m = manifest!;
+  const rows: [string, "base" | "lasna", string][] = [
+    ["MockOracle", "base", m.base.oracle],
+    ["LendingVault", "base", m.base.vault],
+    ["RepayReceiver", "base", m.base.receiver],
+    ["Callback proxy", "base", m.base.callbackProxy],
+    ["mCOL", "base", m.base.collateral],
+    ["mUSD", "base", m.base.musd],
+    ["ReactiveRepay", "lasna", m.lasna.reactiveRepay],
+    ["System contract", "lasna", m.lasna.systemContract],
+    ["Demo borrower", "base", m.borrower],
+    ["Operator", "base", m.base.operator],
+  ];
+  return (
+    <Card title="Contracts and deployment" note={`From the deploy manifest, ${new Date(m.generatedAt).toISOString().slice(0, 10)}`}>
+      <div className="deploy">
+        <ul className="deploy__list">
+          {rows.map(([name, chain, addr]) => {
+            const url = addressUrl(chain, addr as `0x${string}`);
+            return (
+              <li key={name}>
+                <span>{name}</span>
+                <span className={`chain chain--${chain}`}>{CHAINS[chain].short}</span>
+                {url ? (
+                  <a className="hash mono" href={url} target="_blank" rel="noreferrer">
+                    {shortHex(addr)}&nbsp;↗
+                  </a>
+                ) : (
+                  <span className="hash mono" title={addr}>{shortHex(addr)}</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <details className="deploy__txs">
+          <summary>{m.transactions.length} deployment and funding transactions</summary>
+          <ul>
+            {m.transactions.map((t) => (
+              <li key={t.hash}>
+                <span>{t.label}</span>
+                <span className={`chain chain--${t.chain}`}>{CHAINS[t.chain].short}</span>
+                <TxHash hash={t.hash} chain={t.chain} />
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    </Card>
   );
 }

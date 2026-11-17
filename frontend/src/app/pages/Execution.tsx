@@ -1,8 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import type { Hex } from "viem";
 import { fmtDate, fmtMusd, fmtPct, fmtPrice, fmtSeconds } from "../lib/format";
-import { CALLBACK_PROXY, CHAINS, callbackPayload, contracts, type ChainKey } from "../lib/manifest";
-import { DEMO_TRIGGER_E6, collateralValueE6, ratioBps } from "../lib/math";
+import { CHAINS, callbackPayload, contracts, type ChainKey } from "../lib/manifest";
+import { collateralValueE6, ratioBps } from "../lib/math";
 import type { Run, TxRef } from "../lib/sim";
 import { useSim } from "../lib/store";
 import { Card, Empty, PageHead, Pill, Row, RunSteps, SimTag, StatusChip, TxHash, latencyOf } from "../components/ui";
@@ -45,6 +45,7 @@ export function Execution() {
 }
 
 function Detail({ run }: { run: Run }) {
+  const routeTrigger = useSim().routeTriggerE6;
   const latency = latencyOf(run);
   const observed = run.callbackAtMs ? ((run.callbackAtMs - run.pushedAtMs) / 1000).toFixed(2) : null;
   const before = ratioBps(collateralValueE6(run.before.collateralE18, run.priceE6), run.repay?.debtBeforeE6 ?? run.before.debtE6);
@@ -63,7 +64,7 @@ function Detail({ run }: { run: Run }) {
           title="2 · Reactive request"
           chain="lasna"
           at={run.request}
-          empty={run.routeTriggered ? "Waiting for Lasna to react." : `No request. ${fmtPrice(run.priceE6)} is above the ${fmtPrice(DEMO_TRIGGER_E6)} route trigger.`}
+          empty={run.routeTriggered ? "Waiting for Lasna to react." : `No request. ${fmtPrice(run.priceE6)} is above the ${fmtPrice(routeTrigger)} route trigger.`}
           rows={[["Event", "RepayRequested"], ["originTxHash", run.origin.tx], ["oracleVersion", `v${run.version}`]]}
         />
         <TxCard
@@ -78,13 +79,13 @@ function Detail({ run }: { run: Run }) {
       <div className="grid grid--2">
         <Card title="Latency" actions={latency !== null ? <Pill tone="ok">{fmtSeconds(latency)}</Pill> : <Pill tone="muted">not measured</Pill>}>
           <div className="kvs">
-            <Row k="Price block timestamp · Base Sepolia" v={fmtDate(run.origin.ts)} />
-            <Row k="Callback block timestamp · Base Sepolia" v={run.callback ? fmtDate(run.callback.ts) : "—"} />
+            <Row k={`Price block timestamp · ${CHAINS.base.name}`} v={fmtDate(run.origin.ts)} />
+            <Row k={`Callback block timestamp · ${CHAINS.base.name}`} v={run.callback ? fmtDate(run.callback.ts) : "—"} />
             <Row k="End to end, callback block − price block" v={latency !== null ? fmtSeconds(latency) : "—"} />
             <Row k="Local clock, observed" v={observed ? `${observed} s` : "—"} />
           </div>
           <p className="fine">
-            Both timestamps come from Base Sepolia blocks, so they share one clock. Block timestamps count whole seconds and a block lands every 2 seconds, so the figure is accurate to about 2 seconds. The local clock figure is measured in this browser and kept separate.
+            Both timestamps come from {CHAINS.base.name} blocks, so they share one clock. Block timestamps count whole seconds and a block lands every 2 seconds, so the figure is accurate to about 2 seconds. The local clock figure is measured in this browser and kept separate.
           </p>
         </Card>
 
@@ -110,7 +111,7 @@ function Detail({ run }: { run: Run }) {
           <Calldata label="Encoded on Lasna, sender = address(0)" data={payload.requested} highlight={false} />
           <Calldata label={`Delivered by the proxy, sender = ReactiveRepay`} data={payload.delivered} highlight />
           <div className="kvs">
-            <Row k="Callback proxy · Base Sepolia" v={<span title={CALLBACK_PROXY}>{CALLBACK_PROXY.slice(0, 10)}…{CALLBACK_PROXY.slice(-4)}</span>} />
+            <Row k={`Callback proxy · ${CHAINS.base.name}`} v={<span title={contracts.callbackProxy}>{contracts.callbackProxy.slice(0, 10)}…{contracts.callbackProxy.slice(-4)}</span>} />
             <Row k="Injected ReactiveRepay" v={<span title={contracts.reactiveRepay}>{contracts.reactiveRepay.slice(0, 10)}…{contracts.reactiveRepay.slice(-4)}</span>} />
           </div>
         </Card>

@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import type { Hex } from "viem";
 import { fmtClock, fmtPct, fmtSeconds, shortHex } from "../lib/format";
 import { CHAINS, isLocalSimulation, txUrl, type ChainKey } from "../lib/manifest";
+import type { Outcome } from "../lib/store";
+import type { Result } from "../lib/sim";
 import { LIQ_BPS, OPEN_MIN_BPS, TARGET_BPS } from "../lib/math";
 import { STATUS_LABEL, type Run, type RunStatus } from "../lib/sim";
-import type { Result } from "../lib/sim";
 
 /* ───────── Layout atoms ───────── */
 
@@ -98,15 +99,16 @@ export function SimTag() {
 export function TxHash({ hash, chain, full }: { hash?: Hex; chain: ChainKey; full?: boolean }) {
   if (!hash) return <span className="dim">not observed yet</span>;
   const text = full ? hash : shortHex(hash);
-  if (isLocalSimulation)
+  const url = txUrl(chain, hash);
+  if (!url)
     return (
-      <span className="hash mono" title={`${CHAINS[chain].name} · Local simulation hash, not on chain`}>
+      <span className="hash mono" title={`${CHAINS[chain].name}${isLocalSimulation ? " · Local simulation" : ""} · ${hash}`}>
         {text}
       </span>
     );
   return (
-    <a className="hash mono" href={txUrl(chain, hash)} target="_blank" rel="noreferrer">
-      {text} ↗
+    <a className="hash mono" href={url} target="_blank" rel="noreferrer" title={`Open on ${CHAINS[chain].name} explorer`}>
+      {text}&nbsp;↗
     </a>
   );
 }
@@ -150,9 +152,9 @@ export function RunSteps({ run, compact }: { run: Run; compact?: boolean }) {
   const reqState = !run.routeTriggered ? "none" : run.request ? "done" : "wait";
   const cbState = !run.routeTriggered ? "none" : run.callback ? (run.status === "repaid" ? "done" : "skip") : run.request ? "wait" : "idle";
   const steps = [
-    { name: "Price update", chain: "Base Sepolia", state: "done", hash: run.origin.tx, c: "base" as ChainKey, ts: run.origin.ts },
-    { name: "Reactive request", chain: "Reactive Lasna", state: reqState, hash: run.request?.tx, c: "lasna" as ChainKey, ts: run.request?.ts },
-    { name: "Callback", chain: "Base Sepolia", state: cbState, hash: run.callback?.tx, c: "base" as ChainKey, ts: run.callback?.ts },
+    { name: "Price update", chain: CHAINS.base.name, state: "done", hash: run.origin.tx, c: "base" as ChainKey, ts: run.origin.ts },
+    { name: "Reactive request", chain: CHAINS.lasna.name, state: reqState, hash: run.request?.tx, c: "lasna" as ChainKey, ts: run.request?.ts },
+    { name: "Callback", chain: CHAINS.base.name, state: cbState, hash: run.callback?.tx, c: "base" as ChainKey, ts: run.callback?.ts },
   ];
   const note = (st: string) =>
     st === "none" ? "no request: price above the route trigger" : st === "wait" ? "waiting…" : st === "idle" ? "not observed yet" : st === "skip" ? "skipped by the vault" : null;
@@ -213,23 +215,35 @@ export function Field(props: {
 
 /* ───────── Toasts for action results ───────── */
 
-type Toast = Result & { id: number };
-const ToastCtx = createContext<(r: Result) => void>(() => {});
+type Toast = Result & { id: number; pending?: boolean };
+const ToastCtx = createContext<(r: Outcome) => void>(() => {});
 export const useNotify = () => useContext(ToastCtx);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const notify = useCallback((r: Result) => {
-    const id = Date.now() + Math.random();
-    setToasts((t) => [...t.slice(-2), { ...r, id }]);
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), r.ok ? 3200 : 5200);
-  }, []);
+  const drop = useCallback((id: number, ms: number) => window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), ms), []);
+  const notify = useCallback(
+    (r: Outcome) => {
+      const id = Date.now() + Math.random();
+      if (r instanceof Promise) {
+        setToasts((t) => [...t.slice(-2), { id, ok: true, pending: true, message: "Confirm in your wallet, then wait for the block…" }]);
+        void r.then((res) => {
+          setToasts((t) => t.map((x) => (x.id === id ? { ...res, id } : x)));
+          drop(id, res.ok ? 4200 : 6500);
+        });
+        return;
+      }
+      setToasts((t) => [...t.slice(-2), { ...r, id }]);
+      drop(id, r.ok ? 3200 : 5200);
+    },
+    [drop],
+  );
   return (
     <ToastCtx.Provider value={notify}>
       {children}
       <div className="toasts" role="status" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast ${t.ok ? "toast--ok" : "toast--bad"}`}>
+          <div key={t.id} className={`toast ${t.pending ? "toast--pending" : t.ok ? "toast--ok" : "toast--bad"}`}>
             {t.message}
           </div>
         ))}

@@ -7,6 +7,7 @@ import type { Hex } from "viem";
 import { DEMO_TRIGGER_E6, E18, E6, FRESHNESS_S, OPEN_MIN_BPS, collateralValueE6, ratioBps, repayPlan, type RepayCap } from "./math";
 import { fmtCol, fmtMusd, fmtPct, fmtPrice } from "./format";
 import { contracts, type ChainKey } from "./manifest";
+import type { SourceStatus } from "./live";
 
 export type RunStatus = "above" | "waiting" | "requested" | "repaid" | "skipped";
 export const STATUS_LABEL: Record<RunStatus, string> = {
@@ -75,6 +76,8 @@ export interface SimState {
   requested: number[];
   replaying: boolean;
   nextId: number;
+  /** Present when the state comes from deployed contracts rather than the in-browser simulation. */
+  source?: SourceStatus;
 }
 
 export type Result = { ok: true; message: string } | { ok: false; message: string };

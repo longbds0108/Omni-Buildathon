@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { fmtAgo, fmtClock, fmtCol, fmtMusd, fmtPct, fmtPrice, fmtUsd } from "../lib/format";
 import { LIQ_BPS, collateralValueE6, priceAtRatioE6, ratioBps, repayPlan } from "../lib/math";
 import { isFresh } from "../lib/sim";
+import { CHAINS } from "../lib/manifest";
 import { useNow, useSim } from "../lib/store";
 import { Card, Empty, PageHead, Pill, Row, RunLink, RunSteps, SimTag, Stat, StatusChip, fmtLatency } from "../components/ui";
 import { PriceChart, RatioGauge } from "../components/visuals";
@@ -59,8 +60,8 @@ export function Overview() {
             <Stat label="Collateral value" value={fmtUsd(value)} sub={`${fmtCol(p.collateralE18)} mCOL`} />
             <Stat label="Reserve" value={fmtMusd(p.reserveE6)} sub="mUSD for repays" />
             <Stat label="Max per repay" value={fmtMusd(p.maxRepayE6)} sub="mUSD per callback" />
-            <Stat label="Vault trigger" value={fmtPrice(p.triggerE6)} sub="Base Sepolia" />
-            <Stat label="Route trigger" value={fmtPrice(s.routeTriggerE6)} sub="Lasna" />
+            <Stat label="Vault trigger" value={fmtPrice(p.triggerE6)} sub={CHAINS.base.name} />
+            <Stat label="Route trigger" value={fmtPrice(s.routeTriggerE6)} sub={CHAINS.lasna.name} />
             <Stat label="Protection" value={p.enabled ? "On" : "Off"} sub={`configured at v${p.configVersion}`} tone={p.enabled ? "ok" : "warn"} />
             <Stat label="Vault liquidity" value={fmtMusd(s.liquidityE6)} sub="mUSD to lend" />
           </div>

@@ -2,6 +2,9 @@ import { connectorsForWallets, darkTheme, type Theme } from "@rainbow-me/rainbow
 import { coinbaseWallet, injectedWallet, metaMaskWallet, rabbyWallet, rainbowWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
+import type { Chain } from "viem";
+import { manifest } from "./manifest";
+import { chainOf } from "./live";
 
 /*
  * RainbowKit + wagmi on Base Sepolia only: every transaction the borrower signs lands there; Lasna needs no wallet.
@@ -21,13 +24,21 @@ const connectors = connectorsForWallets(
   { appName: "Repay Relay", projectId: projectId || "unset", appDescription: "Automatic repay from a reserve, driven by Reactive Network." },
 );
 
+/* The chain the borrower signs on: Base Sepolia (with the manifest's RPC), or the local anvil stand-in. */
+const home: Chain =
+  manifest?.network === "local"
+    ? chainOf(manifest.base, "ETH")
+    : manifest
+      ? { ...baseSepolia, rpcUrls: { default: { http: [manifest.base.rpc] } } }
+      : baseSepolia;
+
 export const wagmiConfig = createConfig({
   connectors,
-  chains: [baseSepolia],
-  transports: { [baseSepolia.id]: http() },
+  chains: [home],
+  transports: { [home.id]: http(manifest?.base.rpc) },
 });
 
-export const BASE_SEPOLIA = baseSepolia;
+export const BASE_SEPOLIA = home;
 
 /* The dashboard palette: charcoal and olive surfaces, warm off-white text, burnt orange for the primary action. */
 const base = darkTheme({ accentColor: "#c95d2a", accentColorForeground: "#fff6ec", borderRadius: "small", overlayBlur: "small" });

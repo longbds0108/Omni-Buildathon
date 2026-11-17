@@ -2,3 +2,6 @@
 node_modules/
 dist/
 .env
+# written by the deploy scripts; commit a testnet one with `git add -f` to host the dashboard on real data
+frontend/public/manifest.json
+contracts/deployments/local/*.json

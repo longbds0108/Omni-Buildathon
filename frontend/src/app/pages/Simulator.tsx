@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fmtMusd, fmtPct, fmtPrice, fmtUsd } from "../lib/format";
 import { E6, LIQ_BPS, OPEN_MIN_BPS, TARGET_BPS, parseUnits, ratioBps, collateralValueE6, repayPlan } from "../lib/math";
 import { DEMO_POSITION, actions, useSim } from "../lib/store";
+import { dataMode } from "../lib/manifest";
 import { useTweenArray } from "../components/visuals";
 import { Card, Field, PageHead, Pill, RatioMeter, Row, RunLink, SimTag, StatusChip, ratioTone, useNotify } from "../components/ui";
 
@@ -104,6 +105,18 @@ export function Simulator() {
           )}
         </Card>
 
+        {dataMode !== "sim" ? (
+          <Card title="Acceptance scenario on chain" note="Each step is a real transaction">
+            <ol className="howto">
+              <li>The operator pushes <b>$1,800</b>. The borrower opens 1 mCOL against 1,000 mUSD, funds 150 mUSD and turns protection on with a 120 mUSD limit.</li>
+              <li>Push <b>$1,400</b>. The ratio drops to 140% and Lasna requests nothing.</li>
+              <li>Push <b>$1,350</b>. Lasna requests a callback and the vault repays 100 mUSD, back to 150%.</li>
+            </ol>
+            <p className="fine">
+              Use the Push price button in the top bar for prices, and Position and Protection for the borrower's steps. Then follow the run in <Link to="/activity">Activity</Link>.
+            </p>
+          </Card>
+        ) : (
         <Card title="Acceptance scenario" note="$1,800 setup, then $1,400 with no request, then $1,350 repaid back to 150%">
           <div className="btn-row">
             <button className="btn btn--primary btn--sm" disabled={s.replaying} onClick={() => notify(actions.replay())}>
@@ -120,6 +133,7 @@ export function Simulator() {
             Replay takes about fifteen seconds. Follow it on <Link to="/activity">Activity</Link> or in <Link to="/execution">Execution Details</Link>.
           </p>
         </Card>
+        )}
       </div>
     </>
   );
