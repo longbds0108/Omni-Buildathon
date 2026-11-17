@@ -1,0 +1,138 @@
+{
+  "network": "testnet",
+  "generatedAt": "2026-11-17T10:31:35.428Z",
+  "base": {
+    "rpc": "https://base-sepolia-rpc.publicnode.com",
+    "explorer": "https://sepolia.basescan.org",
+    "name": "Base Sepolia",
+    "chainId": 84532,
+    "deployBlock": 59946006,
+    "operator": "0xF9642B695D4DDf58599c953a791F94c2e96b6a57",
+    "collateral": "0x8e802F7811519Cb66b96241a93f80043537378ae",
+    "musd": "0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844",
+    "oracle": "0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9",
+    "vault": "0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6",
+    "receiver": "0x1F8A235387763A67E4f293E1bDFC65E149437120",
+    "callbackProxy": "0x476F44b11F5C942c58f4c8E3d0300E5710743585"
+  },
+  "lasna": {
+    "rpc": "https://lasna-rpc.rnk.dev/",
+    "explorer": "https://lasna.reactscan.net",
+    "name": "Reactive Lasna",
+    "chainId": 5318007,
+    "deployBlock": 8563514,
+    "reactiveRepay": "0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140",
+    "systemContract": "0x8888888888888888888888888888888888888888"
+  },
+  "borrower": "0xF9642B695D4DDf58599c953a791F94c2e96b6a57",
+  "triggerPriceE6": "1350000000",
+  "callbackGasLimit": 600000,
+  "funding": {
+    "receiverWei": "10000000000000000",
+    "reactiveWei": "1000000000000000000"
+  },
+  "transactions": [
+    {
+      "chain": "base",
+      "label": "Deploy TestToken",
+      "hash": "0x4217ffc6965b30de1829a6c95f6d713b347898e8763b8322e5aa592d8262f632",
+      "block": 59946125
+    },
+    {
+      "chain": "base",
+      "label": "Deploy TestToken",
+      "hash": "0xfa6c705888d24e40ffef33b4a484899ba52dcd9d47405867b794f1ca3da797b1",
+      "block": 59946133
+    },
+    {
+      "chain": "base",
+      "label": "Deploy MockOracle",
+      "hash": "0xd73a1e198a76fc7f0c1fbe6ac171484d124a938582089d91ff20a86793eecda5",
+      "block": 59946139
+    },
+    {
+      "chain": "base",
+      "label": "Deploy LendingVault",
+      "hash": "0x483665c846af3f8eddea54d7887bea340a413e5f53b851335f4797532cb2b94d",
+      "block": 59946146
+    },
+    {
+      "chain": "base",
+      "label": "mUSD · mint",
+      "hash": "0x8d31cc6dd69c348a90735140f0b7f265efaa7350a9700088ffca68a44598d8d9",
+      "block": 59946153
+    },
+    {
+      "chain": "base",
+      "label": "mUSD · approve",
+      "hash": "0x9505d3c3cd00be5627c51db1cfa201bca28f99d2a6663894ad5d02746ef098ea",
+      "block": 59946159
+    },
+    {
+      "chain": "base",
+      "label": "LendingVault · seedLiquidity",
+      "hash": "0x9499d6351c50ca62d9a7da1e43471014e78e026c32c6bada3bcadaca8b962dab",
+      "block": 59946166
+    },
+    {
+      "chain": "base",
+      "label": "mCOL · mint",
+      "hash": "0x5bbc853f9a9913d0576fb96817c7c663c0710b32d5ba9b0b5bfe1a913f37dc82",
+      "block": 59946173
+    },
+    {
+      "chain": "base",
+      "label": "mUSD · mint",
+      "hash": "0xd5ac5e440af53c093614122219f6b2b8d8cb290dda784a757bd54dffdec2c6e4",
+      "block": 59946180
+    },
+    {
+      "chain": "base",
+      "label": "MockOracle · setPrice",
+      "hash": "0x2e1bb9f032dfc9dc4efdf0754353aaea7b8c5f8366bf453097904a69e4de88c1",
+      "block": 59946188
+    },
+    {
+      "chain": "lasna",
+      "label": "Deploy ReactiveRepay",
+      "hash": "0x4749068b68b77ae0b1e17c07e868f01f8ac560fef47b936eaf2cfc75c6b5446b",
+      "block": 8563536
+    },
+    {
+      "chain": "base",
+      "label": "Deploy RepayReceiver",
+      "hash": "0xf1c340e3ada51b0a3b606854b4db86fd7478881ddc96bb43e160afd75dca7de9",
+      "block": 59946464
+    },
+    {
+      "chain": "base",
+      "label": "LendingVault · setReceiver",
+      "hash": "0xa8b325993723cd206b6d3369df7cb391b9daeaaf1a5e47b185f5a1a7bfa94c7f",
+      "block": 59946470
+    },
+    {
+      "chain": "base",
+      "label": "Callback proxy · depositTo",
+      "hash": "0xb5f1aa1ef75412a2efe204b7bdfb22f20a257ed607dc9a85c2250a0e608c0261",
+      "block": 59946477
+    },
+    {
+      "chain": "lasna",
+      "label": "ReactiveRepay · setRecipient",
+      "hash": "0x805bfd0a3aed1ae89262ef8680ef15ab7a240c7d5ba03f00c49bf9a6ad525212",
+      "block": 8563593
+    },
+    {
+      "chain": "lasna",
+      "label": "System contract · depositTo",
+      "hash": "0xcf1392e25d5c8783429a6cc836c55ab1b64e58105fd3ad1dc5c1f5034828472f",
+      "block": 8563595
+    },
+    {
+      "chain": "lasna",
+      "label": "ReactiveRepay · subscribe",
+      "hash": "0x3815d9912ce894067a1c5a36ccaadff287da4e4c99863dc272ee86d67029432e",
+      "block": 8563597
+    }
+  ]
+}

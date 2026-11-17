@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import type { Hex } from "viem";
 import { fmtDate, fmtMusd, fmtPct, fmtPrice, fmtSeconds } from "../lib/format";
-import { CHAINS, callbackPayload, contracts, type ChainKey } from "../lib/manifest";
+import { CHAINS, callbackPayload, contracts, dataMode, type ChainKey } from "../lib/manifest";
 import { collateralValueE6, ratioBps } from "../lib/math";
 import type { Run, TxRef } from "../lib/sim";
 import { useSim } from "../lib/store";
@@ -82,10 +82,13 @@ function Detail({ run }: { run: Run }) {
             <Row k={`Price block timestamp · ${CHAINS.base.name}`} v={fmtDate(run.origin.ts)} />
             <Row k={`Callback block timestamp · ${CHAINS.base.name}`} v={run.callback ? fmtDate(run.callback.ts) : "—"} />
             <Row k="End to end, callback block − price block" v={latency !== null ? fmtSeconds(latency) : "—"} />
+            <Row k={`Blocks apart on ${CHAINS.base.name}`} v={run.callback ? `${(run.callback.block - run.origin.block).toLocaleString("en-US")} blocks` : "—"} />
             <Row k="Local clock, observed" v={observed ? `${observed} s` : "—"} />
           </div>
           <p className="fine">
-            Both timestamps come from {CHAINS.base.name} blocks, so they share one clock. Block timestamps count whole seconds and a block lands every 2 seconds, so the figure is accurate to about 2 seconds. The local clock figure is measured in this browser and kept separate.
+            Both timestamps come from {CHAINS.base.name} blocks, so they share one clock. Block timestamps count whole seconds, so the difference is accurate to about one second.
+            {dataMode === "testnet" && <> Base Sepolia makes a block about every 0.2 seconds, so the block distance gives a finer estimate (about 0.2 s per block).</>} The local clock figure is
+            measured in this browser and kept separate.
           </p>
         </Card>
 

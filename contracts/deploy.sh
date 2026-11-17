@@ -2,6 +2,7 @@
 # Deploys the full loop on testnet: Base Sepolia (84532) → Reactive Lasna (5318007) → Base Sepolia.
 #
 #   ACCOUNT=deployer ./deploy.sh            # Foundry keystore (cast wallet import deployer --interactive)
+#   ACCOUNT=deployer PASSWORD_FILE=… ./deploy.sh   # same, unattended
 #   PRIVATE_KEY=0x… ./deploy.sh             # or a key from your local environment
 #
 # The deployer needs Base Sepolia ETH and Lasna lREACT (send Base Sepolia ETH to the faucet
@@ -16,7 +17,7 @@ BASE_SEPOLIA_RPC="${BASE_SEPOLIA_RPC:-https://sepolia.base.org}"
 LASNA_RPC="${LASNA_RPC:-https://lasna-rpc.rnk.dev/}"
 export BASE_SEPOLIA_RPC LASNA_RPC DEPLOY_TAG=testnet
 
-if [[ -n "${ACCOUNT:-}" ]]; then AUTH=(--account "$ACCOUNT");
+if [[ -n "${ACCOUNT:-}" ]]; then AUTH=(--account "$ACCOUNT"); [[ -n "${PASSWORD_FILE:-}" ]] && AUTH+=(--password-file "$PASSWORD_FILE");
 elif [[ -n "${PRIVATE_KEY:-}" ]]; then AUTH=(--private-key "$PRIVATE_KEY");
 else echo "Set ACCOUNT (Foundry keystore name) or PRIVATE_KEY." >&2; exit 1; fi
 

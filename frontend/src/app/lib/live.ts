@@ -82,8 +82,8 @@ export class LiveSource {
   private times = new Map<string, number>();
   private routeTrigger: bigint | null = null;
   private busy = false;
-  // eth_getLogs block ranges: the public Base Sepolia RPC refuses more than 200 blocks; Lasna takes 20,000+.
-  // A refused range halves the chunk, so a stricter custom RPC still works.
+  // eth_getLogs block ranges. Base Sepolia makes a block every ~0.2 s, so wide ranges matter: publicnode accepts
+  // 50,000 blocks, the official sepolia.base.org only 200. Lasna takes 20,000+. A refused range halves the chunk.
   private chunkBase: bigint;
   private chunkLasna: bigint;
 
@@ -91,8 +91,8 @@ export class LiveSource {
     this.m = m;
     this.base = createPublicClient({ chain: chainOf(m.base, "ETH"), transport: http(m.base.rpc) }) as PublicClient;
     this.lasna = createPublicClient({ chain: chainOf(m.lasna, m.network === "local" ? "ETH" : "lREACT"), transport: http(m.lasna.rpc) }) as PublicClient;
-    this.chunkBase = m.network === "local" ? 10_000n : /sepolia\.base\.org/.test(m.base.rpc) ? 200n : 2_000n;
-    this.chunkLasna = 10_000n;
+    this.chunkBase = m.network === "local" ? 10_000n : /\/\/sepolia\.base\.org/.test(m.base.rpc) ? 200n : 50_000n;
+    this.chunkLasna = 20_000n;
     this.nextBase = BigInt(m.base.deployBlock);
     this.nextLasna = BigInt(m.lasna.deployBlock);
     this.state = {

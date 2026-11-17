@@ -19,8 +19,8 @@ const wire = read("wire.json");
 
 const NETWORKS = {
   testnet: {
-    base: { rpc: process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org", explorer: "https://sepolia.basescan.org", name: "Base Sepolia" },
-    lasna: { rpc: process.env.LASNA_RPC || "https://lasna-rpc.rnk.dev/", explorer: "https://lasna.reactscan.net", name: "Reactive Lasna" },
+    base: { rpc: process.env.DASHBOARD_BASE_RPC || "https://base-sepolia-rpc.publicnode.com", explorer: "https://sepolia.basescan.org", name: "Base Sepolia" },
+    lasna: { rpc: process.env.DASHBOARD_LASNA_RPC || "https://lasna-rpc.rnk.dev/", explorer: "https://lasna.reactscan.net", name: "Reactive Lasna" },
   },
   local: {
     base: { rpc: "http://127.0.0.1:8545", explorer: null, name: "Local Base (anvil)" },

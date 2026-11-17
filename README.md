@@ -124,16 +124,34 @@ or do the same from the dashboard.
 
 ## Latency
 
-End-to-end latency is the callback block's timestamp minus the price update block's timestamp, both on Base Sepolia, so both come from one clock. Block timestamps have 1-second resolution and Base Sepolia makes a block every 2 seconds, so a figure is accurate to about 2 seconds. Any browser-clock measurement is labeled separately.
+End-to-end latency is the callback block's timestamp minus the price update block's timestamp, both on Base Sepolia, so both come from one clock. Block timestamps count whole seconds, so that figure is accurate to about one second. Base Sepolia currently makes a block about every 0.2 seconds (measured on 17 Nov 2026: 1,000 blocks in 200 s), so the dashboard also shows the block distance, a finer estimate. Any browser-clock measurement is labeled separately.
+
+## Testnet deployment (live)
+
+Deployed on 17 Nov 2026. The full manifest, with every deploy and funding transaction, is `contracts/deployments/testnet/manifest.json`.
+
+| Contract | Chain | Address |
+|---|---|---|
+| MockOracle | Base Sepolia | [`0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9`](https://sepolia.basescan.org/address/0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9) |
+| LendingVault | Base Sepolia | [`0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6`](https://sepolia.basescan.org/address/0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6) |
+| RepayReceiver | Base Sepolia | [`0x1F8A235387763A67E4f293E1bDFC65E149437120`](https://sepolia.basescan.org/address/0x1F8A235387763A67E4f293E1bDFC65E149437120) |
+| mCOL | Base Sepolia | [`0x8e802F7811519Cb66b96241a93f80043537378ae`](https://sepolia.basescan.org/address/0x8e802F7811519Cb66b96241a93f80043537378ae) |
+| mUSD | Base Sepolia | [`0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844`](https://sepolia.basescan.org/address/0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844) |
+| ReactiveRepay | Reactive Lasna | [`0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140`](https://lasna.reactscan.net/address/0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140) |
+| Demo borrower and operator | both | `0xF9642B695D4DDf58599c953a791F94c2e96b6a57` |
+
+Funding: 1 lREACT deposited for ReactiveRepay at the system contract, 0.01 ETH for RepayReceiver at the callback proxy.
 
 ## Testnet proof
 
-Not deployed yet. After `./deploy.sh` and the acceptance run, record here:
+The acceptance scenario, run on 17 Nov 2026 against the deployment above:
 
-| Step | Chain | Tx hash |
-|---|---|---|
-| PriceUpdated v2 ($1,400) | Base Sepolia | |
-| PriceUpdated v3 ($1,350), origin | Base Sepolia | |
-| RepayRequested v3 | Reactive Lasna | |
-| AutoRepaid v3 (callback) | Base Sepolia | |
-| Measured latency | | |
+| Step | Chain | Result | Tx hash |
+|---|---|---|---|
+| Setup at $1,800 (oracle v1) | Base Sepolia | 1 mCOL, 1,000 mUSD debt, 150 reserve, 120 limit, protection on: **180%** | see manifest + `DemoPosition` broadcast |
+| PriceUpdated v2, $1,400 | Base Sepolia | **140%**, debt stays 1,000. Lasna ran `react()` (ReactiveRepay's reserve went 1.0000 → 0.9887 lREACT) and requested nothing | [`0xf997c847…02ace3`](https://sepolia.basescan.org/tx/0xf997c8478f50f30952eb16d81fec9c3b55ebafa8c93933dc3d5fada4e002ace3) |
+| PriceUpdated v3, $1,350 (origin) | Base Sepolia | block 59,947,556 | [`0xa2d8f994…076912`](https://sepolia.basescan.org/tx/0xa2d8f994a21abc0e0c2ebb07cf7f4b4cb45f6926505696dde81d306ef3076912) |
+| RepayRequested v3 | Reactive Lasna | carries origin tx `0xa2d8f994…` and version 3; block 8,564,794 | [`0xfdb57bfb…ba476b`](https://lasna.reactscan.net/tx/0xfdb57bfbc1d5b268d4beff12c342b0bceb3ccbd76ea640618ffd9e69e6ba476b) |
+| AutoRepaid v3 (callback) | Base Sepolia | repaid **100 mUSD**: debt 1,000 → **900**, reserve 150 → **50**, ratio back to **150%**; block 59,947,565 | [`0x9feae670…87e0473`](https://sepolia.basescan.org/tx/0x9feae670d4bb799613160ef3fdcb21e70156d44dd14c588b89c6b772c87e0473) |
+
+**Measured latency:** 1 second by block timestamps (callback block 1,794,911,381 − price block 1,794,911,380; 1-second resolution), and 9 blocks apart on Base Sepolia, about 1.8 seconds at ~0.2 s per block.
