@@ -15,6 +15,22 @@ MockOracle.setPrice ──PriceUpdated──▶    ReactiveRepay.react()   ─�
 
 Each run is joined across chains by **oracle version + origin tx hash**: `PriceUpdated` → `RepayRequested` → `AutoRepaid` or `CallbackSkipped`.
 
+## Buildathon submission
+
+| Requirement | Where |
+|---|---|
+| Track | **Every Second Counts** (time-sensitive DeFi: price-triggered loan protection) |
+| Networks | Reactive **Lasna** testnet in the middle, **Base Sepolia** as origin and destination |
+| Public, open-source repo | This repository, [MIT license](LICENSE) |
+| Deployed contract addresses | [Testnet deployment (live)](#testnet-deployment-live) |
+| Transaction hashes for the full loop | [Testnet proof](#testnet-proof): `PriceUpdated` (Base Sepolia) → `RepayRequested` (Lasna) → `AutoRepaid` (Base Sepolia) |
+| Latency across the full loop | **1 s** by block timestamps, **9 blocks** (about 1.8 s) on Base Sepolia. Method in [Latency](#latency) |
+| Timers on Base Sepolia | The 15-minute price freshness check uses `block.timestamp`, never block counts |
+| Demo video (under 3 min) | _link to be added_ (recording plan: [docs/demo-video.md](docs/demo-video.md)) |
+| Built during the event | First commit on 17 Nov 2026 |
+
+What the reactive contract does on its own, with no off-chain bot: it filters the oracle log by chain, contract, topic and data shape, compares the price with the borrower's trigger, requests at most one callback per oracle version, and carries the origin tx hash into the callback so every repayment can be traced back to the price update that caused it. The vault then re-checks ten conditions before it moves any funds, and records a reason when it skips.
+
 ## Repository
 
 | Path | What |
@@ -155,3 +171,7 @@ The acceptance scenario, run on 17 Nov 2026 against the deployment above:
 | AutoRepaid v3 (callback) | Base Sepolia | repaid **100 mUSD**: debt 1,000 → **900**, reserve 150 → **50**, ratio back to **150%**; block 59,947,565 | [`0x9feae670…87e0473`](https://sepolia.basescan.org/tx/0x9feae670d4bb799613160ef3fdcb21e70156d44dd14c588b89c6b772c87e0473) |
 
 **Measured latency:** 1 second by block timestamps (callback block 1,794,911,381 − price block 1,794,911,380; 1-second resolution), and 9 blocks apart on Base Sepolia, about 1.8 seconds at ~0.2 s per block.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
