@@ -1,7 +1,7 @@
 {
   "callbackGasLimit": 600000,
   "chainId": 5318007,
-  "deployBlock": 8563514,
-  "reactiveRepay": "0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140",
+  "deployBlock": 8634999,
+  "reactiveRepay": "0x428ce88602cAa7bC05509607d825751dB3462462",
   "triggerPriceE6": 1350000000
 }

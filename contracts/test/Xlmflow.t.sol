@@ -15,7 +15,7 @@ import { MockSystemContract } from "../src/mocks/MockSystemContract.sol";
 import { MockCallbackProxy } from "../src/mocks/MockCallbackProxy.sol";
 
 /// @notice The whole loop on one EVM: oracle → (mock system) → ReactiveRepay → (mock proxy) → receiver → vault.
-contract RepayRelayTest is Test {
+contract XlmflowTest is Test {
     address constant SYSTEM = 0x8888888888888888888888888888888888888888;
     uint256 constant BASE_SEPOLIA = 84532;
     uint256 constant E6 = 1e6;

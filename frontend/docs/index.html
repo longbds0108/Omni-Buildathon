@@ -251,7 +251,7 @@
             <p>target debt = collateral value ÷ 1.5</p>
             <p>repay = min( debt − target debt, reserve, max per repay )</p>
           </div>
-          <p>Worked example, from the run recorded on testnet on 17 Nov 2026:</p>
+          <p>Worked example, from the run recorded on testnet on 18 Nov 2026:</p>
           <div class="table">
             <table>
               <tbody>
@@ -381,9 +381,9 @@
             <li>Open the run in <a href="/app/execution">Execution Details</a> to see its three transactions.</li>
           </ol>
           <div class="note">
-            <b>Example.</b> With 1 mCOL and 400 mUSD of debt, a price of $550 gives a ratio of 137.5%. The vault repays about
-            33.33 mUSD and the ratio returns to 150%. A price of $1,300 would trigger the callback too, but the ratio would
-            still be 325%, so the vault skips it with <i>Nothing to repay</i>.
+            <b>Example.</b> With 1 mCOL and 900 mUSD of debt, a price of $1,300 gives a ratio of 144.4%. The vault repays about
+            33.33 mUSD and the ratio returns to 150%. Pushing $1,350 again would trigger the callback too, but the ratio would
+            already be exactly 150%, so the vault skips it with <i>Nothing to repay</i>.
           </div>
         </section>
 
@@ -403,19 +403,19 @@
         <!-- ───────── Reference ───────── -->
         <section id="contracts" class="doc">
           <h2>Contracts and addresses</h2>
-          <p>Deployed on 17 Nov 2026.</p>
+          <p>Deployed on 18 Nov 2026.</p>
           <div class="table">
             <table>
               <thead>
                 <tr><th>Contract</th><th>Chain</th><th>Address</th></tr>
               </thead>
               <tbody>
-                <tr><td>LendingVault</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6" target="_blank" rel="noreferrer">0xc05A1f04…157aA7F6</a></td></tr>
-                <tr><td>MockOracle</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9" target="_blank" rel="noreferrer">0x75e188ca…3d9954E9</a></td></tr>
-                <tr><td>RepayReceiver</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x1F8A235387763A67E4f293E1bDFC65E149437120" target="_blank" rel="noreferrer">0x1F8A2353…49437120</a></td></tr>
-                <tr><td>mCOL (18 decimals)</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x8e802F7811519Cb66b96241a93f80043537378ae" target="_blank" rel="noreferrer">0x8e802F78…537378ae</a></td></tr>
-                <tr><td>mUSD (6 decimals)</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844" target="_blank" rel="noreferrer">0x7d2b1BaC…97505844</a></td></tr>
-                <tr><td>ReactiveRepay</td><td>Reactive Lasna</td><td><a class="hash mono" href="https://lasna.reactscan.net/address/0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140" target="_blank" rel="noreferrer">0x1Fce7b29…B87aC140</a></td></tr>
+                <tr><td>LendingVault</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0xA1B5bccdaDcD51201D18D7F03d8C7AF630d25332" target="_blank" rel="noreferrer">0xA1B5bccd…30d25332</a></td></tr>
+                <tr><td>MockOracle</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0xf895f707D4a4b945032cfA7ecd6BBD2f439d828a" target="_blank" rel="noreferrer">0xf895f707…439d828a</a></td></tr>
+                <tr><td>RepayReceiver</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x849DeeF3144fbB31cB894855078cD4EC4F95eb41" target="_blank" rel="noreferrer">0x849DeeF3…4F95eb41</a></td></tr>
+                <tr><td>mCOL (18 decimals)</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x82138701634719DD1cBB5129475022977C6B67f2" target="_blank" rel="noreferrer">0x82138701…7C6B67f2</a></td></tr>
+                <tr><td>mUSD (6 decimals)</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x0618D548B16F837e6d1b45A5854C40ce50B585EE" target="_blank" rel="noreferrer">0x0618D548…50B585EE</a></td></tr>
+                <tr><td>ReactiveRepay</td><td>Reactive Lasna</td><td><a class="hash mono" href="https://lasna.reactscan.net/address/0x428ce88602cAa7bC05509607d825751dB3462462" target="_blank" rel="noreferrer">0x428ce886…B3462462</a></td></tr>
                 <tr><td>Callback proxy</td><td>Base Sepolia</td><td><span class="hash mono">0x476F44b1…10743585</span></td></tr>
                 <tr><td>System contract</td><td>Reactive Lasna</td><td><span class="hash mono">0x88888888…88888888</span></td></tr>
               </tbody>
@@ -428,9 +428,9 @@
                 <tr><th>Step</th><th>Chain</th><th>Transaction</th></tr>
               </thead>
               <tbody>
-                <tr><td>Price $1,350, version 3</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/tx/0xa2d8f994a21abc0e0c2ebb07cf7f4b4cb45f6926505696dde81d306ef3076912" target="_blank" rel="noreferrer">0xa2d8f994…076912</a></td></tr>
-                <tr><td>RepayRequested</td><td>Reactive Lasna</td><td><a class="hash mono" href="https://lasna.reactscan.net/tx/0xfdb57bfbc1d5b268d4beff12c342b0bceb3ccbd76ea640618ffd9e69e6ba476b" target="_blank" rel="noreferrer">0xfdb57bfb…ba476b</a></td></tr>
-                <tr><td>AutoRepaid, 100 mUSD</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/tx/0x9feae670d4bb799613160ef3fdcb21e70156d44dd14c588b89c6b772c87e0473" target="_blank" rel="noreferrer">0x9feae670…87e0473</a></td></tr>
+                <tr><td>Price $1,350, version 3</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/tx/0x70ec77feb30209ab6429d3ceba20aba33551d962cfaca78f1571e1a1b121f822" target="_blank" rel="noreferrer">0x70ec77fe…21f822</a></td></tr>
+                <tr><td>RepayRequested</td><td>Reactive Lasna</td><td><a class="hash mono" href="https://lasna.reactscan.net/tx/0xd997aca0e009082fc12cfa8086753df354f34e141d8e8a2f0d0efd319005d4c3" target="_blank" rel="noreferrer">0xd997aca0…05d4c3</a></td></tr>
+                <tr><td>AutoRepaid, 100 mUSD</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/tx/0x4a5e17eacdfc40969bdcfa25f64ccf6f9559c001b7ed69e3b43bc158cfa86aa1" target="_blank" rel="noreferrer">0x4a5e17ea…fa86aa1</a></td></tr>
               </tbody>
             </table>
           </div>
@@ -455,7 +455,7 @@
             clock: the dashboard subtracts the two block timestamps. Timestamps count whole seconds, so the dashboard also
             shows how many blocks apart the two transactions are. Base Sepolia makes a block about every 0.2 seconds.
           </p>
-          <p>The first recorded loop took <b>1 second</b> by timestamps, <b>9 blocks</b> apart, about 1.8 seconds.</p>
+          <p>The first recorded loop took <b>1 second</b> by timestamps, <b>6 blocks</b> apart, about 1.2 seconds.</p>
         </section>
 
         <section id="troubleshooting" class="doc">

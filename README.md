@@ -26,7 +26,7 @@ Each run is joined across chains by **oracle version + origin tx hash**: `PriceU
 | Public, open-source repo | This repository, [MIT license](LICENSE) |
 | Deployed contract addresses | [Testnet deployment (live)](#testnet-deployment-live) |
 | Transaction hashes for the full loop | [Testnet proof](#testnet-proof): `PriceUpdated` (Base Sepolia) → `RepayRequested` (Lasna) → `AutoRepaid` (Base Sepolia) |
-| Latency across the full loop | **1 s** by block timestamps, **9 blocks** (about 1.8 s) on Base Sepolia. Method in [Latency](#latency) |
+| Latency across the full loop | **1 s** by block timestamps, **6 blocks** (about 1.2 s) on Base Sepolia. Method in [Latency](#latency) |
 | Timers on Base Sepolia | The 15-minute price freshness check uses `block.timestamp`, never block counts |
 | Demo video (under 3 min) | _link to be added_ (recording plan: [docs/demo-video.md](docs/demo-video.md)) |
 | Built during the event | First commit on 17 Nov 2026 |
@@ -39,7 +39,7 @@ What the reactive contract does on its own, with no off-chain bot: it filters th
 |---|---|
 | `contracts/` | Foundry project: contracts, tests, deploy scripts, manifest builder |
 | `frontend/` | Vite homepage (`/`) and React + TypeScript + viem + wagmi/RainbowKit dashboard (`/app/`) |
-| `REPAY_RELAY_MVP.md` | The build brief |
+| `XLMFLOW_MVP.md` | The build brief |
 
 ## Contracts
 
@@ -146,33 +146,35 @@ End-to-end latency is the callback block's timestamp minus the price update bloc
 
 ## Testnet deployment (live)
 
-Deployed on 17 Nov 2026. The full manifest, with every deploy and funding transaction, is `contracts/deployments/testnet/manifest.json`.
+Deployed on 18 Nov 2026. The full manifest, with every deploy and funding transaction, is `contracts/deployments/testnet/manifest.json`.
 
 | Contract | Chain | Address |
 |---|---|---|
-| MockOracle | Base Sepolia | [`0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9`](https://sepolia.basescan.org/address/0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9) |
-| LendingVault | Base Sepolia | [`0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6`](https://sepolia.basescan.org/address/0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6) |
-| RepayReceiver | Base Sepolia | [`0x1F8A235387763A67E4f293E1bDFC65E149437120`](https://sepolia.basescan.org/address/0x1F8A235387763A67E4f293E1bDFC65E149437120) |
-| mCOL | Base Sepolia | [`0x8e802F7811519Cb66b96241a93f80043537378ae`](https://sepolia.basescan.org/address/0x8e802F7811519Cb66b96241a93f80043537378ae) |
-| mUSD | Base Sepolia | [`0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844`](https://sepolia.basescan.org/address/0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844) |
-| ReactiveRepay | Reactive Lasna | [`0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140`](https://lasna.reactscan.net/address/0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140) |
+| MockOracle | Base Sepolia | [`0xf895f707D4a4b945032cfA7ecd6BBD2f439d828a`](https://sepolia.basescan.org/address/0xf895f707D4a4b945032cfA7ecd6BBD2f439d828a) |
+| LendingVault | Base Sepolia | [`0xA1B5bccdaDcD51201D18D7F03d8C7AF630d25332`](https://sepolia.basescan.org/address/0xA1B5bccdaDcD51201D18D7F03d8C7AF630d25332) |
+| RepayReceiver | Base Sepolia | [`0x849DeeF3144fbB31cB894855078cD4EC4F95eb41`](https://sepolia.basescan.org/address/0x849DeeF3144fbB31cB894855078cD4EC4F95eb41) |
+| mCOL | Base Sepolia | [`0x82138701634719DD1cBB5129475022977C6B67f2`](https://sepolia.basescan.org/address/0x82138701634719DD1cBB5129475022977C6B67f2) |
+| mUSD | Base Sepolia | [`0x0618D548B16F837e6d1b45A5854C40ce50B585EE`](https://sepolia.basescan.org/address/0x0618D548B16F837e6d1b45A5854C40ce50B585EE) |
+| ReactiveRepay | Reactive Lasna | [`0x428ce88602cAa7bC05509607d825751dB3462462`](https://lasna.reactscan.net/address/0x428ce88602cAa7bC05509607d825751dB3462462) |
 | Demo borrower and operator | both | `0xF9642B695D4DDf58599c953a791F94c2e96b6a57` |
 
-Funding: 1 lREACT deposited for ReactiveRepay at the system contract, 0.01 ETH for RepayReceiver at the callback proxy.
+Funding: 0.5 lREACT deposited for ReactiveRepay at the system contract, 0.005 ETH for RepayReceiver at the callback proxy.
+
+The first deployment (17 Nov 2026, token names still under the old project name) is archived in `contracts/deployments/testnet-2026-11-17/`.
 
 ## Testnet proof
 
-The acceptance scenario, run on 17 Nov 2026 against the deployment above:
+The acceptance scenario, run on 18 Nov 2026 against the deployment above:
 
 | Step | Chain | Result | Tx hash |
 |---|---|---|---|
 | Setup at $1,800 (oracle v1) | Base Sepolia | 1 mCOL, 1,000 mUSD debt, 150 reserve, 120 limit, protection on: **180%** | see manifest + `DemoPosition` broadcast |
-| PriceUpdated v2, $1,400 | Base Sepolia | **140%**, debt stays 1,000. Lasna ran `react()` (ReactiveRepay's reserve went 1.0000 → 0.9887 lREACT) and requested nothing | [`0xf997c847…02ace3`](https://sepolia.basescan.org/tx/0xf997c8478f50f30952eb16d81fec9c3b55ebafa8c93933dc3d5fada4e002ace3) |
-| PriceUpdated v3, $1,350 (origin) | Base Sepolia | block 59,947,556 | [`0xa2d8f994…076912`](https://sepolia.basescan.org/tx/0xa2d8f994a21abc0e0c2ebb07cf7f4b4cb45f6926505696dde81d306ef3076912) |
-| RepayRequested v3 | Reactive Lasna | carries origin tx `0xa2d8f994…` and version 3; block 8,564,794 | [`0xfdb57bfb…ba476b`](https://lasna.reactscan.net/tx/0xfdb57bfbc1d5b268d4beff12c342b0bceb3ccbd76ea640618ffd9e69e6ba476b) |
-| AutoRepaid v3 (callback) | Base Sepolia | repaid **100 mUSD**: debt 1,000 → **900**, reserve 150 → **50**, ratio back to **150%**; block 59,947,565 | [`0x9feae670…87e0473`](https://sepolia.basescan.org/tx/0x9feae670d4bb799613160ef3fdcb21e70156d44dd14c588b89c6b772c87e0473) |
+| PriceUpdated v2, $1,400 | Base Sepolia | **140%**, debt stays 1,000. Lasna ran `react()` and requested nothing | [`0x0054bb63…4de028`](https://sepolia.basescan.org/tx/0x0054bb633b5c7836ba72d563835ae00f84299ae6c49e9c593bbba7ac794de028) |
+| PriceUpdated v3, $1,350 (origin) | Base Sepolia | block 60,326,813 | [`0x70ec77fe…21f822`](https://sepolia.basescan.org/tx/0x70ec77feb30209ab6429d3ceba20aba33551d962cfaca78f1571e1a1b121f822) |
+| RepayRequested v3 | Reactive Lasna | carries origin tx `0x70ec77fe…` and version 3; block 8,635,213 | [`0xd997aca0…05d4c3`](https://lasna.reactscan.net/tx/0xd997aca0e009082fc12cfa8086753df354f34e141d8e8a2f0d0efd319005d4c3) |
+| AutoRepaid v3 (callback) | Base Sepolia | repaid **100 mUSD**: debt 1,000 → **900**, reserve 150 → **50**, ratio back to **150%**; block 60,326,819 | [`0x4a5e17ea…fa86aa1`](https://sepolia.basescan.org/tx/0x4a5e17eacdfc40969bdcfa25f64ccf6f9559c001b7ed69e3b43bc158cfa86aa1) |
 
-**Measured latency:** 1 second by block timestamps (callback block 1,794,911,381 − price block 1,794,911,380; 1-second resolution), and 9 blocks apart on Base Sepolia, about 1.8 seconds at ~0.2 s per block.
+**Measured latency:** 1 second by block timestamps (callback block 1,794,987,232 − price block 1,794,987,231; 1-second resolution), and 6 blocks apart on Base Sepolia, about 1.2 seconds at ~0.2 s per block.
 
 ## License
 

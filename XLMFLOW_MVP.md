@@ -1,4 +1,4 @@
-# Repay Relay — MVP build prompt
+# xlmflow — MVP build prompt
 
 ## Nhiệm vụ
 

@@ -354,7 +354,7 @@ export function setup(s: SimState, ms: number) {
 
 /* ───────── Persistence (BigInt-safe JSON) ───────── */
 
-const KEY = "repay-relay.local-simulation.v2";
+const KEY = "xlmflow.local-simulation.v2";
 export function save(s: SimState) {
   try {
     localStorage.setItem(KEY, JSON.stringify(s, (_k, v) => (typeof v === "bigint" ? `big:${v}` : v)));

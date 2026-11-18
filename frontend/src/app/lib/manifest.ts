@@ -55,7 +55,7 @@ export const addressUrl = (chain: ChainKey, address: Address) =>
   dataMode !== "sim" && CHAINS[chain].explorer ? `${CHAINS[chain].explorer}/address/${address}` : null;
 
 /** Stand-in addresses for the in-browser simulation, derived from a label so they stay the same across reloads. */
-const simAddress = (label: string) => getAddress(`0x${keccak256(toHex(`repay-relay/local-simulation/${label}`)).slice(-40)}`);
+const simAddress = (label: string) => getAddress(`0x${keccak256(toHex(`xlmflow/local-simulation/${label}`)).slice(-40)}`);
 
 export const contracts = {
   borrower: simAddress("borrower"),

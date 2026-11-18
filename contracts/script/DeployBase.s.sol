@@ -15,8 +15,8 @@ contract DeployBase is DeployStep {
         uint256 deployBlock = block.number;
 
         vm.startBroadcast();
-        TestToken col = new TestToken("Repay Relay Mock Collateral", "mCOL", 18, deployer);
-        TestToken musd = new TestToken("Repay Relay Mock USD", "mUSD", 6, deployer);
+        TestToken col = new TestToken("xlmflow Mock Collateral", "mCOL", 18, deployer);
+        TestToken musd = new TestToken("xlmflow Mock USD", "mUSD", 6, deployer);
         MockOracle oracle = new MockOracle(deployer);
         LendingVault vault = new LendingVault(col, musd, oracle, deployer);
 
