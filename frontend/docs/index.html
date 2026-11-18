@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Repay Relay Docs</title>
+    <title>xlmflow Docs</title>
     <meta
       name="description"
-      content="How Repay Relay works and how to use it: connect a wallet, read your loan, set protection, push a price and trace every automatic repay on chain."
+      content="How xlmflow works and how to use it: connect a wallet, read your loan, set protection, push a price and trace every automatic repay on chain."
     />
     <meta name="theme-color" content="#08070b" />
     <link rel="icon" type="image/svg+xml" href="/home/assets/img/favicon.svg" />
@@ -20,9 +20,9 @@
 
     <!-- ───────── Navigation (same as the homepage) ───────── -->
     <header class="nav is-scrolled" id="nav">
-      <a class="brand" href="/" aria-label="Repay Relay homepage">
+      <a class="brand" href="/" aria-label="xlmflow homepage">
         <img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" />
-        <span>repay relay</span>
+        <span>xlmflow</span>
       </a>
       <nav class="nav__links" aria-label="Primary">
         <a href="/#features">Product</a>
@@ -81,7 +81,7 @@
       <main id="main" class="docs__main">
         <header class="docs__hero">
           <p class="badge mono"><i></i>docs · Base Sepolia ↔ Reactive Lasna</p>
-          <h1>Repay Relay <em>guide</em></h1>
+          <h1>xlmflow <em>guide</em></h1>
           <p class="docs__lead">
             Everything you need to use the dashboard, understand what happens on chain when the price drops, and check each
             automatic repay yourself.
@@ -96,7 +96,7 @@
         <section id="overview" class="doc">
           <h2>Overview</h2>
           <p>
-            Repay Relay protects a loan from a falling price. The borrower sets aside a <b>reserve</b> of mUSD next to the
+            xlmflow protects a loan from a falling price. The borrower sets aside a <b>reserve</b> of mUSD next to the
             loan. When the collateral price reaches the <b>trigger</b>, Reactive Network sees the price update and calls the
             vault back. The vault then pays part of the debt from the reserve, so the loan returns to a safe ratio. Nobody
             has to click anything, and no off-chain bot is involved.
@@ -116,7 +116,7 @@
             </div>
           </div>
           <div class="note">
-            <b>Testnet.</b> Repay Relay runs on Base Sepolia and Reactive Lasna with test tokens (mCOL as collateral, mUSD
+            <b>Testnet.</b> xlmflow runs on Base Sepolia and Reactive Lasna with test tokens (mCOL as collateral, mUSD
             as the loan currency). The oracle is a test oracle whose price is set by an operator, so a price drop can be
             shown on demand. All numbers in the dashboard are read from the deployed contracts.
           </div>
@@ -547,7 +547,7 @@ cd contracts &amp;&amp; ./deploy.sh</code></pre>
     <footer class="footer">
       <div class="footer__main">
         <div class="footer__brand">
-          <a class="brand" href="/"><img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" /><span>repay relay</span></a>
+          <a class="brand" href="/"><img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" /><span>xlmflow</span></a>
           <p>When the price drops, Reactive Lasna triggers a repay of part of the loan from the borrower's own reserve</p>
         </div>
         <nav class="footer__col" aria-label="Product">
@@ -570,7 +570,7 @@ cd contracts &amp;&amp; ./deploy.sh</code></pre>
         </nav>
       </div>
       <div class="footer__bottom mono">
-        <span>© 2026 Repay Relay</span>
+        <span>© 2026 xlmflow</span>
       </div>
     </footer>
 

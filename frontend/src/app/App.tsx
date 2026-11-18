@@ -135,7 +135,7 @@ function GlobalSearch() {
   const hits: Hit[] = [];
   if (term) {
     const pages: Hit[] = [
-      { kind: "Page", label: "Home", sub: "Repay Relay homepage", to: "/", external: true },
+      { kind: "Page", label: "Home", sub: "xlmflow homepage", to: "/", external: true },
       { kind: "Page", label: "Docs", sub: "User guide", to: "/docs/", external: true },
       ...NAV.map((n) => ({ kind: "Page", label: n.label, sub: "Dashboard", to: n.to })),
     ];
@@ -404,7 +404,7 @@ function Shell({ children }: { children: ReactNode }) {
             <circle cx="13" cy="13" r="3.2" fill="#c95d2a" />
           </svg>
           <span className="brand__text">
-            <b>repay relay</b>
+            <b>xlmflow</b>
             <small>dashboard</small>
           </span>
         </a>
@@ -475,7 +475,7 @@ export function App() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={rainbowTheme} initialChain={BASE_SEPOLIA} locale="en-US" appInfo={{ appName: "Repay Relay" }} modalSize="compact">
+        <RainbowKitProvider theme={rainbowTheme} initialChain={BASE_SEPOLIA} locale="en-US" appInfo={{ appName: "xlmflow" }} modalSize="compact">
           <BrowserRouter basename="/app" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ToastProvider>
               <Shell>

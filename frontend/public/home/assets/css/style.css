@@ -1,5 +1,5 @@
 /*
- * Repay Relay homepage.
+ * xlmflow homepage.
  * UX, layout and CSS follow the PortaldotL homepage (github.com/longbds0108/PortaldotL, web/public/home): ink surfaces,
  * a cream primary that turns brand blue on hover, Inter Tight as the only typeface, a near-black stage lit by a blue
  * light ribbon. Accents are set apart by colour, not by a second font.
@@ -2608,7 +2608,7 @@ h2.is-sheen,
   font-size: clamp(6rem, 25vw, 24rem);
   font-weight: 700;
   line-height: 0.85;
-  letter-spacing: -0.075em;
+  letter-spacing: -0.05em;
   background: linear-gradient(180deg, rgba(131, 170, 255, 0.32), rgba(131, 170, 255, 0.02) 75%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -2629,7 +2629,7 @@ h2.is-sheen,
   font-size: 11.5px;
 }
 
-/* ───────── Repay Relay previews ───────── */
+/* ───────── xlmflow previews ───────── */
 
 .warn-t {
   color: var(--warning);

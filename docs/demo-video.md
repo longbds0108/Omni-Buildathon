@@ -25,7 +25,7 @@ Nếu nợ hoặc reserve đã khác, tính lại: giá cần đẩy < nợ × 1
 
 | Thời gian | Màn hình | Chữ trên màn hình |
 |---|---|---|
-| 0:00–0:15 | Trang chủ Repay Relay, cuộn qua sơ đồ | "Repay Relay: when the price drops, your loan repays itself. Base Sepolia → Reactive Lasna → Base Sepolia." |
+| 0:00–0:15 | Trang chủ xlmflow, cuộn qua sơ đồ | "xlmflow: when the price drops, your loan repays itself. Base Sepolia → Reactive Lasna → Base Sepolia." |
 | 0:15–0:40 | Dashboard, trang **Position**: nợ, reserve, đồng hồ tỷ lệ | "A borrower keeps a repay reserve and sets a trigger price. No bot, no keeper." |
 | 0:40–0:55 | Trang **Protection**: ngưỡng $1,350, giới hạn 120 mUSD | "Protection: trigger $1,350, at most 120 mUSD per callback, target ratio 150%." |
 | 0:55–1:30 | Bấm **Push price** → nhập `550` → xác nhận trên MetaMask → chờ toast thành công | "The oracle publishes a new price on Base Sepolia." |

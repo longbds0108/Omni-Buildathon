@@ -87,7 +87,7 @@ export function NotDeployed() {
             <circle cx="13" cy="13" r="3.2" fill="#c95d2a" />
           </svg>
           <span className="brand__text">
-            <b>repay relay</b>
+            <b>xlmflow</b>
             <small>dashboard</small>
           </span>
         </a>

@@ -21,7 +21,7 @@ const connectors = connectorsForWallets(
         { groupName: "More", wallets: [walletConnectWallet, injectedWallet] },
       ]
     : [{ groupName: "Browser wallets", wallets: [injectedWallet, rabbyWallet, coinbaseWallet] }],
-  { appName: "Repay Relay", projectId: projectId || "unset", appDescription: "Automatic repay from a reserve, driven by Reactive Network." },
+  { appName: "xlmflow", projectId: projectId || "unset", appDescription: "Automatic repay from a reserve, driven by Reactive Network." },
 );
 
 /* The chain the borrower signs on: Base Sepolia (with the manifest's RPC), or the local anvil stand-in. */

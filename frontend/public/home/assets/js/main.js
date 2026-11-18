@@ -1,5 +1,5 @@
 /*
- * Repay Relay homepage interactions (structure and motion follow the PortaldotL homepage).
+ * xlmflow homepage interactions (structure and motion follow the PortaldotL homepage).
  * Works without GSAP (content, feature switching and the live repay rule need none of it); GSAP + ScrollTrigger
  * add the intro, scroll-linked storytelling and magnetic buttons. prefers-reduced-motion skips all of that.
  */
@@ -150,11 +150,11 @@
   const previews = $$("[data-preview]");
   const stage = $(".features__stage");
   const PATHS = [
-    "relay / position / repay rule",
-    "relay / lasna / react",
-    "relay / base sepolia / callback",
-    "relay / vault / guards",
-    "relay / vault / reserve",
+    "xlmflow / position / repay rule",
+    "xlmflow / lasna / react",
+    "xlmflow / base sepolia / callback",
+    "xlmflow / vault / guards",
+    "xlmflow / vault / reserve",
   ];
   let activeFeature = -1;
 

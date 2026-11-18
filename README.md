@@ -1,4 +1,4 @@
-# Repay Relay
+# xlmflow
 
 Automatic partial loan repayment, triggered by the price. Built for the Reactive Omni Buildathon ("Every Second Counts").
 

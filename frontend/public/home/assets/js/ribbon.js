@@ -1,5 +1,5 @@
 /*
- * Repay Relay light ribbon (from the PortaldotL homepage).
+ * xlmflow light ribbon (from the PortaldotL homepage).
  *
  * One bundle of fine light strands follows a spine (Catmull-Rom through five points). The bundle pinches to a
  * white-hot point where it bends and fans out towards both ends; strands sway slightly and carry bright packets

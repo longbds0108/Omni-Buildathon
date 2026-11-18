@@ -1,6 +1,6 @@
-# Repay Relay contracts
+# xlmflow contracts
 
-Foundry project for the Repay Relay loop (Base Sepolia → Reactive Lasna → Base Sepolia). See the root README for the
+Foundry project for the xlmflow loop (Base Sepolia → Reactive Lasna → Base Sepolia). See the root README for the
 architecture, the vault rules and how to run the tests, the local two-chain simulation and the testnet deployment.
 
 ```bash

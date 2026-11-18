@@ -1,4 +1,4 @@
-// Repay Relay docs: mobile menu, collapsible contents on small screens, and the current section in the contents.
+// xlmflow docs: mobile menu, collapsible contents on small screens, and the current section in the contents.
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 

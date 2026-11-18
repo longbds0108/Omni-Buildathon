@@ -12,7 +12,7 @@ const appFallback = (): Plugin => {
     next();
   };
   return {
-    name: "repay-relay-app-fallback",
+    name: "xlmflow-app-fallback",
     configureServer: (server) => void server.middlewares.use(rewrite),
     configurePreviewServer: (server) => void server.middlewares.use(rewrite),
   };
