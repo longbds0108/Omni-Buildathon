@@ -21,6 +21,7 @@ import { Execution } from "./pages/Execution";
 
 const I = {
   home: "M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z",
+  docs: "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7",
   overview: "M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z",
   position: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   protection: "M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z",
@@ -135,6 +136,7 @@ function GlobalSearch() {
   if (term) {
     const pages: Hit[] = [
       { kind: "Page", label: "Home", sub: "Repay Relay homepage", to: "/", external: true },
+      { kind: "Page", label: "Docs", sub: "User guide", to: "/docs/", external: true },
       ...NAV.map((n) => ({ kind: "Page", label: n.label, sub: "Dashboard", to: n.to })),
     ];
     hits.push(...pages.filter((p) => p.label.toLowerCase().includes(term)));
@@ -410,6 +412,10 @@ function Shell({ children }: { children: ReactNode }) {
           <a className="side__home" href="/">
             <Icon d={I.home} />
             <span>Home</span>
+          </a>
+          <a className="side__home" href="/docs/">
+            <Icon d={I.docs} />
+            <span>Docs</span>
           </a>
           <p className="side__label">Dashboard</p>
           <ul className="side__nav" ref={nav}>

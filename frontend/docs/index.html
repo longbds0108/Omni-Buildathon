@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Repay Relay Docs</title>
+    <meta
+      name="description"
+      content="How Repay Relay works and how to use it: connect a wallet, read your loan, set protection, push a price and trace every automatic repay on chain."
+    />
+    <meta name="theme-color" content="#08070b" />
+    <link rel="icon" type="image/svg+xml" href="/home/assets/img/favicon.svg" />
+    <link rel="preload" href="/home/assets/fonts/inter-tight-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/home/assets/css/style.css" />
+    <link rel="stylesheet" href="/home/assets/css/docs.css" />
+  </head>
+  <body class="docs-page">
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="atmos" aria-hidden="true"></div>
+
+    <!-- ───────── Navigation (same as the homepage) ───────── -->
+    <header class="nav is-scrolled" id="nav">
+      <a class="brand" href="/" aria-label="Repay Relay homepage">
+        <img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" />
+        <span>repay relay</span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="/#features">Product</a>
+        <a href="/#product">Proof</a>
+        <a href="/#how">How it works</a>
+        <a href="/docs/" aria-current="page">Docs</a>
+      </nav>
+      <div class="nav__right">
+        <a class="btn btn--primary btn--sm" href="/app/">Launch app</a>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="mnav" aria-label="Open menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </header>
+    <div class="mnav" id="mnav" hidden>
+      <nav aria-label="Mobile">
+        <a href="/#features">Product</a>
+        <a href="/#product">Proof</a>
+        <a href="/#how">How it works</a>
+        <a href="/docs/" aria-current="page">Docs</a>
+        <a class="btn btn--primary" href="/app/">Launch app</a>
+      </nav>
+    </div>
+
+    <div class="docs">
+      <!-- ───────── Table of contents ───────── -->
+      <aside class="docs__toc" aria-label="On this page">
+        <details class="toc" open>
+          <summary class="toc__head mono">On this page</summary>
+          <nav>
+            <p class="toc__group mono">Start</p>
+            <a href="#overview">Overview</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#quick-start">Quick start</a>
+            <p class="toc__group mono">Concepts</p>
+            <a href="#concepts">Ratio, trigger and reserve</a>
+            <a href="#repay-amount">How much gets repaid</a>
+            <a href="#checks">The ten checks</a>
+            <p class="toc__group mono">Dashboard</p>
+            <a href="#dashboard">Pages at a glance</a>
+            <a href="#manage-loan">Manage the loan</a>
+            <a href="#protection">Set up protection</a>
+            <a href="#trigger">Trigger a repay</a>
+            <a href="#trace">Trace a run</a>
+            <p class="toc__group mono">Reference</p>
+            <a href="#contracts">Contracts and addresses</a>
+            <a href="#reactive">Reactive Network details</a>
+            <a href="#latency">Latency</a>
+            <a href="#troubleshooting">Troubleshooting</a>
+            <a href="#faq">FAQ</a>
+            <a href="#developers">For developers</a>
+          </nav>
+        </details>
+      </aside>
+
+      <main id="main" class="docs__main">
+        <header class="docs__hero">
+          <p class="badge mono"><i></i>docs · Base Sepolia ↔ Reactive Lasna</p>
+          <h1>Repay Relay <em>guide</em></h1>
+          <p class="docs__lead">
+            Everything you need to use the dashboard, understand what happens on chain when the price drops, and check each
+            automatic repay yourself.
+          </p>
+          <div class="docs__ctas">
+            <a class="btn btn--primary btn--sm" href="/app/">Open the dashboard</a>
+            <a class="btn btn--ghost btn--sm" href="#quick-start">Quick start</a>
+          </div>
+        </header>
+
+        <!-- ───────── Overview ───────── -->
+        <section id="overview" class="doc">
+          <h2>Overview</h2>
+          <p>
+            Repay Relay protects a loan from a falling price. The borrower sets aside a <b>reserve</b> of mUSD next to the
+            loan. When the collateral price reaches the <b>trigger</b>, Reactive Network sees the price update and calls the
+            vault back. The vault then pays part of the debt from the reserve, so the loan returns to a safe ratio. Nobody
+            has to click anything, and no off-chain bot is involved.
+          </p>
+          <div class="cards">
+            <div class="dcard">
+              <p class="dcard__k mono">price falls</p>
+              <p>The oracle on Base Sepolia publishes a new price.</p>
+            </div>
+            <div class="dcard">
+              <p class="dcard__k mono">reactive sees it</p>
+              <p>A reactive contract on Lasna reads the log and asks for a callback.</p>
+            </div>
+            <div class="dcard">
+              <p class="dcard__k mono">debt shrinks</p>
+              <p>The vault on Base Sepolia repays from the reserve, back to 150%.</p>
+            </div>
+          </div>
+          <div class="note">
+            <b>Testnet.</b> Repay Relay runs on Base Sepolia and Reactive Lasna with test tokens (mCOL as collateral, mUSD
+            as the loan currency). The oracle is a test oracle whose price is set by an operator, so a price drop can be
+            shown on demand. All numbers in the dashboard are read from the deployed contracts.
+          </div>
+        </section>
+
+        <!-- ───────── How it works ───────── -->
+        <section id="how-it-works" class="doc">
+          <h2>How it works</h2>
+          <ol class="flow">
+            <li>
+              <span class="flow__n mono">1</span>
+              <div>
+                <h3>Price update <small class="mono">Base Sepolia</small></h3>
+                <p>
+                  The operator calls <code>MockOracle.setPrice</code>. The oracle raises its version by one and emits
+                  <code>PriceUpdated(version, priceE6, updatedAt)</code>.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="flow__n mono">2</span>
+              <div>
+                <h3>Reaction <small class="mono">Reactive Lasna</small></h3>
+                <p>
+                  <code>ReactiveRepay</code> is subscribed to that event. Its <code>react()</code> function checks that the
+                  log really comes from the oracle on Base Sepolia and has the right shape. If the price is at or under
+                  $1,350, and this version was not handled before, it requests a callback and emits
+                  <code>RepayRequested</code>.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="flow__n mono">3</span>
+              <div>
+                <h3>Callback <small class="mono">Base Sepolia</small></h3>
+                <p>
+                  The Reactive callback proxy calls <code>RepayReceiver.executeRepay</code>. The receiver accepts only the
+                  proxy, and only on behalf of <code>ReactiveRepay</code>. It forwards to <code>LendingVault.autoRepay</code>,
+                  which runs its own checks and emits either <code>AutoRepaid</code> or <code>CallbackSkipped</code>.
+                </p>
+              </div>
+            </li>
+          </ol>
+          <p>
+            Each run is joined across both chains by two keys: the <b>oracle version</b> and the <b>origin tx hash</b> (the
+            price update transaction). Both travel inside the callback, so every repay points back to the price update that
+            caused it.
+          </p>
+        </section>
+
+        <!-- ───────── Quick start ───────── -->
+        <section id="quick-start" class="doc">
+          <h2>Quick start</h2>
+          <h3>Just looking</h3>
+          <p>
+            Open the <a href="/app/">dashboard</a>. No wallet is needed to read: the loan, the protection rule, every past run
+            and its transactions load straight from the chains, refreshed every few seconds.
+          </p>
+          <h3>Taking actions</h3>
+          <ol class="steps">
+            <li>Install a wallet such as MetaMask.</li>
+            <li>Click the wallet button in the top bar of the dashboard and connect.</li>
+            <li>
+              Approve the switch to <b>Base Sepolia</b> (chain 84532) when the wallet asks. Every write goes to Base Sepolia;
+              Lasna is only read.
+            </li>
+            <li>
+              Keep a little Base Sepolia ETH for gas. A transaction costs a tiny fraction of a cent at current testnet gas
+              prices.
+            </li>
+          </ol>
+          <div class="note note--warn">
+            <b>Who can do what.</b> This deployment protects one demo loan. Loan actions (approve, repay, reserve, protection)
+            are accepted only from the demo borrower's wallet, and price updates only from the oracle operator. Any other
+            wallet can read everything; the dashboard explains which wallet is needed before it asks for a signature.
+          </div>
+        </section>
+
+        <!-- ───────── Concepts ───────── -->
+        <section id="concepts" class="doc">
+          <h2>Ratio, trigger and reserve</h2>
+          <dl class="terms">
+            <div>
+              <dt>Collateral ratio</dt>
+              <dd>Collateral value divided by debt. 1 mCOL at $1,800 against 1,000 mUSD of debt is 180%.</dd>
+            </div>
+            <div>
+              <dt>Opening ratio</dt>
+              <dd>A loan can be opened only at <b>160%</b> or more, with a price no older than 15 minutes.</dd>
+            </div>
+            <div>
+              <dt>Trigger price</dt>
+              <dd>
+                <b>$1,350.</b> At or under this price, the reactive contract requests a repay. The vault checks the same
+                trigger again before it moves funds.
+              </dd>
+            </div>
+            <div>
+              <dt>Target ratio</dt>
+              <dd><b>150%.</b> An automatic repay brings the loan back to this ratio, unless the reserve or the limit runs out first.</dd>
+            </div>
+            <div>
+              <dt>Reserve</dt>
+              <dd>mUSD the borrower sets aside in the vault for automatic repays. It is kept apart from the vault's lending money, and only the borrower can withdraw it.</dd>
+            </div>
+            <div>
+              <dt>Max per repay</dt>
+              <dd>The most a single callback can repay. It caps how fast the reserve can be spent.</dd>
+            </div>
+            <div>
+              <dt>Liquidation line</dt>
+              <dd><b>120%.</b> Shown for context only. Nothing is ever liquidated in this demo.</dd>
+            </div>
+            <div>
+              <dt>Price freshness</dt>
+              <dd>A price older than <b>15 minutes</b> is stale. The vault refuses to open loans or repay on a stale price. The age is measured with block timestamps.</dd>
+            </div>
+            <div>
+              <dt>Oracle version</dt>
+              <dd>A counter that rises by one with every price update. A repay can happen at most once per version.</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section id="repay-amount" class="doc">
+          <h2>How much gets repaid</h2>
+          <div class="formula mono">
+            <p>target debt = collateral value ÷ 1.5</p>
+            <p>repay = min( debt − target debt, reserve, max per repay )</p>
+          </div>
+          <p>Worked example, from the run recorded on testnet on 17 Nov 2026:</p>
+          <div class="table">
+            <table>
+              <tbody>
+                <tr><th scope="row">Collateral</th><td>1 mCOL at $1,350 = $1,350</td></tr>
+                <tr><th scope="row">Debt before</th><td>1,000 mUSD (ratio 135%)</td></tr>
+                <tr><th scope="row">Target debt</th><td>1,350 ÷ 1.5 = 900 mUSD</td></tr>
+                <tr><th scope="row">Limits</th><td>reserve 150 mUSD, max per repay 120 mUSD</td></tr>
+                <tr><th scope="row">Repay</th><td><b>min(100, 150, 120) = 100 mUSD</b></td></tr>
+                <tr><th scope="row">After</th><td>debt 900, reserve 50, ratio back to 150%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            If the loan is already at or above 150% when the trigger fires, there is nothing to repay. The vault records the
+            run as skipped, with the reason, and keeps the reserve untouched.
+          </p>
+        </section>
+
+        <section id="checks" class="doc">
+          <h2>The ten checks</h2>
+          <p>
+            A callback moves funds only if all ten checks pass, in this order. The first two are done by
+            <code>RepayReceiver</code>, the rest by <code>LendingVault</code>. Execution Details shows each one as passed or
+            failed for every run.
+          </p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Check</th><th>If it fails</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>Sender is the Base Sepolia callback proxy</td><td>reverts</td></tr>
+                <tr><td>2</td><td>The proxy acts for ReactiveRepay</td><td>reverts</td></tr>
+                <tr><td>3</td><td>The position is open</td><td>skipped: No position</td></tr>
+                <tr><td>4</td><td>Protection is on</td><td>skipped: Protection disabled</td></tr>
+                <tr><td>5</td><td>The price is under 15 minutes old</td><td>skipped: Stale price</td></tr>
+                <tr><td>6</td><td>The price is at or under the vault trigger</td><td>skipped: Above trigger</td></tr>
+                <tr><td>7</td><td>The callback carries the newest oracle version</td><td>skipped: Not latest version</td></tr>
+                <tr><td>8</td><td>No repay yet for this loan and version</td><td>skipped: Already paid</td></tr>
+                <tr><td>9</td><td>The version is newer than the last rule change</td><td>skipped: Configured after version</td></tr>
+                <tr><td>10</td><td>There is something to repay and the reserve is not empty</td><td>skipped: Nothing to repay / Reserve empty</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            A skipped callback is a normal outcome, recorded on chain with a <code>CallbackSkipped</code> event. Only callers
+            that are not allowed to call at all are reverted.
+          </p>
+        </section>
+
+        <!-- ───────── Dashboard ───────── -->
+        <section id="dashboard" class="doc">
+          <h2>Pages at a glance</h2>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Page</th><th>What it shows</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><a href="/app/">Overview</a></td><td>The loan in one screen: ratio gauge, price chart, debt and reserve, the latest runs.</td></tr>
+                <tr><td><a href="/app/position">Position</a></td><td>Collateral, debt, reserve, the price at 150% and at 120%, wallet balances, manual repay and close.</td></tr>
+                <tr><td><a href="/app/protection">Protection</a></td><td>The repay rule (on or off, max per repay), the reserve, both trigger prices and a preview of the next repay.</td></tr>
+                <tr><td><a href="/app/simulator">Risk Simulator</a></td><td>What-if prices: drag or type a price and see the ratio and the repay that would follow. The operator can also push that price to the oracle from here.</td></tr>
+                <tr><td><a href="/app/activity">Activity</a></td><td>Every run and event in order, plus the deployment transactions.</td></tr>
+                <tr><td><a href="/app/execution">Execution Details</a></td><td>One run in full: its three transactions, the ten checks, balances before and after, latency.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The top bar has a search box (pages, oracle versions, tx hashes), the <b>Push price</b> button for the operator,
+            and the wallet button. The badge next to it reads <b>Base Sepolia · Lasna</b> when data is live; it turns to
+            <i>Syncing…</i> while it catches up and to <i>RPC error</i> if a chain stops answering.
+          </p>
+        </section>
+
+        <section id="manage-loan" class="doc">
+          <h2>Manage the loan</h2>
+          <p>All of these are on the <a href="/app/position">Position</a> page and need the borrower's wallet.</p>
+          <h3>Open a loan</h3>
+          <ol class="steps">
+            <li>Enter the collateral (mCOL) and the amount to borrow (mUSD). The preview shows the ratio; it must be 160% or more.</li>
+            <li>Click <b>1. Approve mCOL</b> once, so the vault may take the collateral.</li>
+            <li>Click <b>2. Open position</b> and confirm in the wallet.</li>
+          </ol>
+          <h3>Repay by hand</h3>
+          <ol class="steps">
+            <li>Enter an amount, or click <b>Repay all</b>.</li>
+            <li>Click <b>Approve mUSD</b> once, then <b>Repay</b>.</li>
+          </ol>
+          <h3>Close</h3>
+          <p>When the debt is zero, <b>Close position</b> returns the collateral and any reserve left to the wallet.</p>
+        </section>
+
+        <section id="protection" class="doc">
+          <h2>Set up protection</h2>
+          <p>On the <a href="/app/protection">Protection</a> page:</p>
+          <ol class="steps">
+            <li><b>Fund the reserve.</b> Enter an amount under <i>Add to reserve</i>, click <b>Approve mUSD</b> once, then <b>Fund reserve</b>.</li>
+            <li><b>Set the limit.</b> Enter <i>Max repay per callback</i> and click <b>Save limit</b>. A limit above zero turns protection on.</li>
+            <li>
+              <b>Check the preview.</b> The card <i>At $1,350</i> shows what the next repay would be with today's balances,
+              and how many such repays the reserve covers.
+            </li>
+          </ol>
+          <p>
+            You can click <b>Turn protection off</b> at any time, and withdraw the reserve. Changing the rule only applies to price
+            updates that come after the change.
+          </p>
+        </section>
+
+        <section id="trigger" class="doc">
+          <h2>Trigger a repay</h2>
+          <p>
+            This is the full loop, start to finish. It needs the operator wallet, because only the operator may set the test
+            oracle's price.
+          </p>
+          <ol class="steps">
+            <li>
+              Work out a price that will cause a repay: it must be at or under <b>$1,350</b>, and low enough that the ratio
+              falls under 150%. That is: price × collateral &lt; debt × 1.5.
+            </li>
+            <li>Click <b>Push price</b> in the top bar (or use the Risk Simulator), enter the price in dollars and confirm in the wallet.</li>
+            <li>
+              Watch the <a href="/app/">Overview</a>: a new run appears for the new version, then turns to <b>Debt repaid</b>
+              and the gauge moves back to 150%. This usually takes a few seconds.
+            </li>
+            <li>Open the run in <a href="/app/execution">Execution Details</a> to see its three transactions.</li>
+          </ol>
+          <div class="note">
+            <b>Example.</b> With 1 mCOL and 400 mUSD of debt, a price of $550 gives a ratio of 137.5%. The vault repays about
+            33.33 mUSD and the ratio returns to 150%. A price of $1,300 would trigger the callback too, but the ratio would
+            still be 325%, so the vault skips it with <i>Nothing to repay</i>.
+          </div>
+        </section>
+
+        <section id="trace" class="doc">
+          <h2>Trace a run</h2>
+          <p>Every run in Execution Details lists three transactions, each linked to its explorer:</p>
+          <ol class="steps">
+            <li><b>Origin</b> on Base Sepolia: the price update (<code>PriceUpdated</code>).</li>
+            <li><b>Reaction</b> on Lasna: the callback request (<code>RepayRequested</code>), carrying the origin tx hash and version.</li>
+            <li><b>Callback</b> on Base Sepolia: the outcome (<code>AutoRepaid</code> or <code>CallbackSkipped</code>), with the same hash and version.</li>
+          </ol>
+          <p>
+            Prices above the trigger produce only the origin transaction: Lasna still reads the log, but requests nothing.
+          </p>
+        </section>
+
+        <!-- ───────── Reference ───────── -->
+        <section id="contracts" class="doc">
+          <h2>Contracts and addresses</h2>
+          <p>Deployed on 17 Nov 2026.</p>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Contract</th><th>Chain</th><th>Address</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>LendingVault</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0xc05A1f041a42FFa96FC24a3aeBc576b1157aA7F6" target="_blank" rel="noreferrer">0xc05A1f04…157aA7F6</a></td></tr>
+                <tr><td>MockOracle</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x75e188cafAf2b8138E3B19CfAdDA92f13d9954E9" target="_blank" rel="noreferrer">0x75e188ca…3d9954E9</a></td></tr>
+                <tr><td>RepayReceiver</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x1F8A235387763A67E4f293E1bDFC65E149437120" target="_blank" rel="noreferrer">0x1F8A2353…49437120</a></td></tr>
+                <tr><td>mCOL (18 decimals)</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x8e802F7811519Cb66b96241a93f80043537378ae" target="_blank" rel="noreferrer">0x8e802F78…537378ae</a></td></tr>
+                <tr><td>mUSD (6 decimals)</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/address/0x7d2b1BaC9fAF8FE457C9F4533C17E04497505844" target="_blank" rel="noreferrer">0x7d2b1BaC…97505844</a></td></tr>
+                <tr><td>ReactiveRepay</td><td>Reactive Lasna</td><td><a class="hash mono" href="https://lasna.reactscan.net/address/0x1Fce7b29CB138F878B672eBAdFCf54A1B87aC140" target="_blank" rel="noreferrer">0x1Fce7b29…B87aC140</a></td></tr>
+                <tr><td>Callback proxy</td><td>Base Sepolia</td><td><span class="hash mono">0x476F44b1…10743585</span></td></tr>
+                <tr><td>System contract</td><td>Reactive Lasna</td><td><span class="hash mono">0x88888888…88888888</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>First recorded loop</h3>
+          <div class="table">
+            <table>
+              <thead>
+                <tr><th>Step</th><th>Chain</th><th>Transaction</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Price $1,350, version 3</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/tx/0xa2d8f994a21abc0e0c2ebb07cf7f4b4cb45f6926505696dde81d306ef3076912" target="_blank" rel="noreferrer">0xa2d8f994…076912</a></td></tr>
+                <tr><td>RepayRequested</td><td>Reactive Lasna</td><td><a class="hash mono" href="https://lasna.reactscan.net/tx/0xfdb57bfbc1d5b268d4beff12c342b0bceb3ccbd76ea640618ffd9e69e6ba476b" target="_blank" rel="noreferrer">0xfdb57bfb…ba476b</a></td></tr>
+                <tr><td>AutoRepaid, 100 mUSD</td><td>Base Sepolia</td><td><a class="hash mono" href="https://sepolia.basescan.org/tx/0x9feae670d4bb799613160ef3fdcb21e70156d44dd14c588b89c6b772c87e0473" target="_blank" rel="noreferrer">0x9feae670…87e0473</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="reactive" class="doc">
+          <h2>Reactive Network details</h2>
+          <ul class="bullets">
+            <li><code>ReactiveRepay</code> lives on Lasna and subscribes once to <code>PriceUpdated</code> from the oracle on Base Sepolia (chain 84532).</li>
+            <li><code>react()</code> may only be called by the system contract. Logs with the wrong chain, contract, topic or shape are ignored rather than reverted.</li>
+            <li>It requests at most one callback per oracle version, through <code>requestCallbackV_1_0</code>, with a gas limit of 600,000.</li>
+            <li>Reactive gas is paid in lREACT, deposited for <code>ReactiveRepay</code> at the system contract. Callback gas on Base Sepolia is paid in ETH, deposited for <code>RepayReceiver</code> at the callback proxy.</li>
+            <li>lREACT comes from the Lasna faucet: send Base Sepolia ETH to <code class="mono">0x2afaFD29…409f5967</code> and receive 100 lREACT per ETH.</li>
+            <li>Built on reactive-lib-omni v0.1.0. More in the <a href="https://dev.reactive.network/reactive-contracts" target="_blank" rel="noreferrer">Reactive docs&nbsp;↗</a>.</li>
+          </ul>
+        </section>
+
+        <section id="latency" class="doc">
+          <h2>Latency</h2>
+          <p>
+            Latency is the time from the price update to the repay. Both transactions are on Base Sepolia, so they share one
+            clock: the dashboard subtracts the two block timestamps. Timestamps count whole seconds, so the dashboard also
+            shows how many blocks apart the two transactions are. Base Sepolia makes a block about every 0.2 seconds.
+          </p>
+          <p>The first recorded loop took <b>1 second</b> by timestamps, <b>9 blocks</b> apart, about 1.8 seconds.</p>
+        </section>
+
+        <section id="troubleshooting" class="doc">
+          <h2>Troubleshooting</h2>
+          <dl class="terms terms--qa">
+            <div>
+              <dt>"This demo loan belongs to 0xF964…6a57"</dt>
+              <dd>The connected wallet is not the demo borrower. Reading works with any wallet; loan actions need that one.</dd>
+            </div>
+            <div>
+              <dt>"Only the oracle operator can push prices"</dt>
+              <dd>The test oracle accepts prices from its operator only.</dd>
+            </div>
+            <div>
+              <dt>"The oracle price is older than 15 minutes"</dt>
+              <dd>Opening a loan needs a fresh price. Push a new price first, then try again within 15 minutes.</dd>
+            </div>
+            <div>
+              <dt>"Approve the token for the vault first"</dt>
+              <dd>Click the <b>Approve</b> button next to the action. It is needed once per token.</dd>
+            </div>
+            <div>
+              <dt>The wallet asks to switch network</dt>
+              <dd>Accept the switch to Base Sepolia. All writes go there.</dd>
+            </div>
+            <div>
+              <dt>The badge says "Syncing…" or "RPC error"</dt>
+              <dd>A public RPC endpoint is slow or busy. The dashboard retries on its own every few seconds; data on chain is not affected.</dd>
+            </div>
+            <div>
+              <dt>A run shows "Skipped"</dt>
+              <dd>Open it in Execution Details. The failed check names the reason, for example <i>Nothing to repay</i> when the ratio was already at or above 150%.</dd>
+            </div>
+            <div>
+              <dt>A run stays without a callback</dt>
+              <dd>Prices above $1,350 never request one. Under the trigger, check that ReactiveRepay still has lREACT and RepayReceiver still has callback gas.</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section id="faq" class="doc">
+          <h2>FAQ</h2>
+          <dl class="terms terms--qa">
+            <div>
+              <dt>Is this real money?</dt>
+              <dd>No. Every token is a test token on Base Sepolia, and the network fees are testnet ETH and lREACT.</dd>
+            </div>
+            <div>
+              <dt>Can I open my own protected loan?</dt>
+              <dd>Not in this deployment. Each <code>ReactiveRepay</code> watches one borrower, and the test tokens are minted by the deployer. A deployment for another borrower uses the same scripts.</dd>
+            </div>
+            <div>
+              <dt>Can a repay happen twice for one price drop?</dt>
+              <dd>No. Lasna requests at most once per oracle version, and the vault refuses a second repay for the same version.</dd>
+            </div>
+            <div>
+              <dt>What if the reserve runs out?</dt>
+              <dd>The callback is skipped with <i>Reserve empty</i>. Add to the reserve and the next qualifying price update repays again.</dd>
+            </div>
+            <div>
+              <dt>Is there a bot or server?</dt>
+              <dd>No. The reaction runs on Reactive Network and the repay runs in the vault. The dashboard only reads the chains and sends the transactions you sign.</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section id="developers" class="doc">
+          <h2>For developers</h2>
+          <p>The source is open under the MIT license.</p>
+          <pre class="code"><code><span class="c"># contracts: 27 tests, including fuzzing of the repay bounds</span>
+cd contracts &amp;&amp; forge test
+
+<span class="c"># dashboard and these docs</span>
+cd frontend &amp;&amp; npm install &amp;&amp; npm run dev
+
+<span class="c"># deploy to Base Sepolia + Reactive Lasna (Foundry keystore or PRIVATE_KEY in .env)</span>
+cd contracts &amp;&amp; ./deploy.sh</code></pre>
+          <p>
+            The deploy script checks both chains, deploys and wires the five contracts in four steps, funds reactive and
+            callback gas, subscribes, and writes the manifest the dashboard reads. Full details are in the
+            <a href="https://github.com/longbds0108/Omni-Buildathon#readme" target="_blank" rel="noreferrer">README&nbsp;↗</a>.
+          </p>
+        </section>
+
+        <nav class="docs__next" aria-label="Next">
+          <a class="btn btn--primary" href="/app/">Open the dashboard</a>
+          <a class="btn btn--ghost" href="/">Back to homepage</a>
+        </nav>
+      </main>
+    </div>
+
+    <!-- ───────── Footer ───────── -->
+    <footer class="footer">
+      <div class="footer__main">
+        <div class="footer__brand">
+          <a class="brand" href="/"><img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" /><span>repay relay</span></a>
+          <p>When the price drops, Reactive Lasna triggers a repay of part of the loan from the borrower's own reserve</p>
+        </div>
+        <nav class="footer__col" aria-label="Product">
+          <h4 class="mono">product</h4>
+          <a href="/app/">Launch app</a>
+          <a href="/docs/">Docs</a>
+          <a href="/#product">Proof</a>
+          <a href="/#how">How it works</a>
+        </nav>
+        <nav class="footer__col" aria-label="Explorers">
+          <h4 class="mono">explorers</h4>
+          <a href="https://sepolia.basescan.org" target="_blank" rel="noreferrer">Base Sepolia&nbsp;↗</a>
+          <a href="https://lasna.reactscan.net" target="_blank" rel="noreferrer">Reactive Lasna&nbsp;↗</a>
+        </nav>
+        <nav class="footer__col" aria-label="Resources">
+          <h4 class="mono">resources</h4>
+          <a href="https://dev.reactive.network/reactive-contracts" target="_blank" rel="noreferrer">Reactive contracts&nbsp;↗</a>
+          <a href="https://dev.reactive.network/callback-contracts" target="_blank" rel="noreferrer">Callback contracts&nbsp;↗</a>
+          <a href="https://github.com/longbds0108/Omni-Buildathon" target="_blank" rel="noreferrer">Source code&nbsp;↗</a>
+        </nav>
+      </div>
+      <div class="footer__bottom mono">
+        <span>© 2026 Repay Relay</span>
+      </div>
+    </footer>
+
+    <script src="/home/assets/js/docs.js" defer></script>
+  </body>
+</html>
