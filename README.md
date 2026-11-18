@@ -1,5 +1,7 @@
 # xlmflow
 
+**xlmflow** stands for **cross-chain (X) Loan Margin flow**: a price on Base Sepolia, a reaction on Reactive Lasna and a repay back on Base Sepolia keep the loan's margin safe, with no bot in between.
+
 Automatic partial loan repayment, triggered by the price. Built for the Reactive Omni Buildathon ("Every Second Counts").
 
 A borrower opens a simulated loan against test collateral on Base Sepolia, funds a repay reserve in mUSD and sets a per-callback limit. When the oracle price reaches the trigger, a reactive contract on Reactive Lasna sees the price log and asks for a callback to Base Sepolia, where the vault pays part of the debt from that reserve. The dashboard shows the trigger, debt before and after, the three transactions and the measured latency.

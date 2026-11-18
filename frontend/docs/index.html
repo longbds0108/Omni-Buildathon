@@ -96,6 +96,10 @@
         <section id="overview" class="doc">
           <h2>Overview</h2>
           <p>
+            The name stands for <b>cross-chain (X) Loan Margin flow</b>: a price on one chain, a reaction on another and a
+            repay back on the first keep the loan's margin safe.
+          </p>
+          <p>
             xlmflow protects a loan from a falling price. The borrower sets aside a <b>reserve</b> of mUSD next to the
             loan. When the collateral price reaches the <b>trigger</b>, Reactive Network sees the price update and calls the
             vault back. The vault then pays part of the debt from the reserve, so the loan returns to a safe ratio. Nobody
@@ -548,7 +552,7 @@ cd contracts &amp;&amp; ./deploy.sh</code></pre>
       <div class="footer__main">
         <div class="footer__brand">
           <a class="brand" href="/"><img src="/home/assets/img/relay-mark.svg" alt="" width="30" height="30" /><span>xlmflow</span></a>
-          <p>When the price drops, Reactive Lasna triggers a repay of part of the loan from the borrower's own reserve</p>
+          <p>Cross-chain loan margin flow. When the price drops, Reactive Lasna triggers a repay of part of the loan from the borrower's own reserve</p>
         </div>
         <nav class="footer__col" aria-label="Product">
           <h4 class="mono">product</h4>
